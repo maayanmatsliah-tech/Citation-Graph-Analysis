@@ -121,3 +121,52 @@ diag2 = con.execute("""
     WHERE age BETWEEN 1 AND 10
 """).fetchone()
 print(f"Papers with early citations (age 1-10): {diag2[0]}")
+
+results = con.execute("""
+    WITH citation_counts AS (
+        SELECT
+            cited_id,
+            published_year,
+            citation_year,
+            citation_year - published_year AS age,
+            COUNT(*) AS citations_that_year
+        FROM citation_timeline
+        GROUP BY cited_id, published_year, citation_year
+    ),
+    earliest_citation AS (
+        SELECT
+            cited_id,
+            MIN(age) AS first_citation_age,
+            MIN(citation_year) AS awakening_year
+        FROM citation_counts
+        GROUP BY cited_id
+    ),
+    peak_after_awakening AS (
+        SELECT
+            cc.cited_id,
+            MAX(cc.citations_that_year) AS peak_citations
+        FROM citation_counts cc
+        JOIN earliest_citation e ON cc.cited_id = e.cited_id
+        WHERE cc.age >= e.first_citation_age
+        GROUP BY cc.cited_id
+    )
+    SELECT
+        w.title,
+        w.year AS published_year,
+        e.first_citation_age AS years_before_first_citation,
+        e.awakening_year,
+        p.peak_citations
+    FROM earliest_citation e
+    JOIN peak_after_awakening p ON e.cited_id = p.cited_id
+    JOIN works w ON e.cited_id = w.id
+    WHERE e.first_citation_age >= 10
+    ORDER BY p.peak_citations DESC, e.first_citation_age DESC    LIMIT 20
+""").fetchall()
+
+print(f"\n=== Top Sleeping Beauties ===")
+for row in results:
+    print(f"\n'{row[0]}'")
+    print(f"  Published: {row[1]}")
+    print(f"  Years before first citation: {row[2]}")
+    print(f"  Awakening year: {row[3]}")
+    print(f"  Peak citations after awakening: {row[4]}")
