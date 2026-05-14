@@ -50,3 +50,19 @@ Chi-square statistic: 954.21, p-value: ~0.000000000 — statistically significan
 Finding: mutual citation rate decreased by 28% after ChatGPT's release.
 This is the opposite of the hypothesis. The decrease is statistically significant and cannot be attributed to random variation.
 Next step: investigate why.
+
+Validity Checks (May 14, 2026)
+Before accepting the finding, we tested two potential sources of bias:
+1. Field composition bias
+Checked whether the two periods had different field distributions that could explain the rate drop. The top fields were nearly identical — Medicine, Engineering, Computer Science, Environmental Science all present in both periods at similar proportions. A modest shift (Medicine dropped from #1 to #2, Engineering rose to #1) could account for a small portion of the decrease but not a 28% drop.
+2. Citation completeness bias
+The pre-2022 data came from the S3 snapshot and the post-2022 data came from the OpenAlex API — two different sources. If the API had incomplete citation indexing for recent papers, mutual citation counts would be artificially low for 2023-2024. We tested this by checking average references per paper across years:
+
+2020: 78.64 avg refs
+2021: 86.65 avg refs
+2022: 85.26 avg refs
+2023: 85.98 avg refs
+2024: 86.33 avg refs
+
+Reference counts are consistent across all years. No evidence of incomplete indexing for recent papers.
+Conclusion: Neither field composition nor data source bias appears to explain the finding. The 28% decrease in mutual citation rate appears to be real.
