@@ -40,6 +40,13 @@ If mutual citation rates stayed flat or grew at the same pace as overall paper v
 
 If the hypothesis holds, the papers involved in post-2022 mutual citations may also be published closer together in time — suggesting researchers are citing work they discovered very recently rather than work they'd been aware of for a long time. This is not required for the hypothesis to hold but would strengthen it if found.
 
-## Current Status
+## Results (May 14, 2026)
 
-API ingestion running for 2020–2024. Analysis script ready at research/motif_analysis.py. Waiting for ingestion to complete before running.
+Ran research/motif_analysis.py and research/stat_test.py on the cleaned dataset.
+Pre-ChatGPT (2020–2021): 19,769 mutual citation pairs across 403,920 papers — 48.94 per 1000 papers.
+Post-ChatGPT (2023–2024): 14,055 mutual citation pairs across 400,290 papers — 35.11 per 1000 papers.
+Chi-square statistic: 954.21, p-value: ~0.000000000 — statistically significant.
+
+Finding: mutual citation rate decreased by 28% after ChatGPT's release.
+This is the opposite of the hypothesis. The decrease is statistically significant and cannot be attributed to random variation.
+Next step: investigate why.
