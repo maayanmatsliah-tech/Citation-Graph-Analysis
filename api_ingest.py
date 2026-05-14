@@ -24,7 +24,7 @@ def fetch_page(year, cursor="*"):
     return r.json()
 
 target_per_year = 200000
-years = [2021, 2022, 2023, 2024]
+years = [2023, 2024]
 
 for year in years:
     print(f"\n--- ingesting {year} ---")
