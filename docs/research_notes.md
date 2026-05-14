@@ -66,3 +66,15 @@ The pre-2022 data came from the S3 snapshot and the post-2022 data came from the
 
 Reference counts are consistent across all years. No evidence of incomplete indexing for recent papers.
 Conclusion: Neither field composition nor data source bias appears to explain the finding. The 28% decrease in mutual citation rate appears to be real.
+
+## Secondary Finding: Citation Age Increased After ChatGPT (May 14, 2026)
+Ran research/citation_age.py and research/citation_age_test.py to test whether the average age of cited papers changed after ChatGPT.
+Results:
+
+Pre-ChatGPT (2020–2021): 1,855,318 citations, avg age 0.63 years
+Post-ChatGPT (2023–2024): 7,188,198 citations, avg age 2.14 years
+Mann-Whitney U statistic: 11,583,023,273,591.5, p-value: ~0.000000000
+
+Finding: citation age increased 3.4x after ChatGPT — statistically significant.
+Interpretation: After ChatGPT, researchers cite older established work rather than recent contemporaneous papers. This supports the primary finding — if citations are drifting toward older literature, two papers being written simultaneously are less likely to discover and cite each other, which explains the 28% drop in mutual citation rate.
+Revised narrative: ChatGPT did not accelerate peer discovery as hypothesized. Instead, it appears to have shifted citation behavior away from real-time peer discovery toward canonical older literature — possibly because AI tools surface well-known established papers more readily than recent unpublished work.
