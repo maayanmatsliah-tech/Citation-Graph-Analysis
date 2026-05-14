@@ -65,4 +65,48 @@ plt.tight_layout()
 plt.savefig("outputs/motif_analysis.png", dpi=150)
 plt.show()
 
+from scipy.stats import proportions_ztest
+import numpy as np
+
+print("\n=== Statistical Significance Test ===")
+
+# pre-ChatGPT: 2020-2021 combined
+pre_years = [y for y in years if y <= 2021]
+post_years = [y for y in years if y >= 2023]
+
+pre_pairs = sum(mutual_counts.get(y, 0) for y in pre_years)
+post_pairs = sum(mutual_counts.get(y, 0) for y in post_years)
+
+pre_papers = sum(paper_counts.get(y, 0) for y in pre_years)
+post_papers = sum(paper_counts.get(y, 0) for y in post_years)
+
+print(f"Pre-ChatGPT (2020-2021): {pre_pairs:,} mutual pairs out of {pre_papers:,} papers")
+print(f"Post-ChatGPT (2023-2024): {post_pairs:,} mutual pairs out of {post_papers:,} papers")
+
+pre_rate = pre_pairs / pre_papers * 1000
+post_rate = post_pairs / post_papers * 1000
+
+print(f"Pre rate: {pre_rate:.4f} per 1000 papers")
+print(f"Post rate: {post_rate:.4f} per 1000 papers")
+
+# run the test
+counts = np.array([post_pairs, pre_pairs])
+nobs = np.array([post_papers, pre_papers])
+
+stat, pvalue = proportions_ztest(counts, nobs)
+
+print(f"\nZ-statistic: {stat:.4f}")
+print(f"P-value: {pvalue:.6f}")
+
+if pvalue < 0.05:
+    print("Result: statistically significant (p < 0.05)")
+    if post_rate > pre_rate:
+        print("Mutual citation rate INCREASED after ChatGPT.")
+    else:
+        print("Mutual citation rate DECREASED after ChatGPT.")
+else:
+    print("Result: not statistically significant (p >= 0.05)")
+    print("Cannot conclude that ChatGPT changed mutual citation rates.")
+
+
 print("\ndone.")
