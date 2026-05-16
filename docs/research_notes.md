@@ -40,7 +40,7 @@ If mutual citation rates stayed flat or grew at the same pace as overall paper v
 
 If the hypothesis holds, the papers involved in post-2022 mutual citations may also be published closer together in time — suggesting researchers are citing work they discovered very recently rather than work they'd been aware of for a long time. This is not required for the hypothesis to hold but would strengthen it if found.
 
-## Results (May 14, 2026)
+## Results (May 14, 2026) — superseded, see correction below
 
 Ran research/motif_analysis.py and research/stat_test.py on the cleaned dataset.
 Pre-ChatGPT (2020–2021): 19,769 mutual citation pairs across 403,920 papers — 48.94 per 1000 papers.
@@ -50,6 +50,37 @@ Chi-square statistic: 954.21, p-value: ~0.000000000 — statistically significan
 Finding: mutual citation rate decreased by 28% after ChatGPT's release.
 This is the opposite of the hypothesis. The decrease is statistically significant and cannot be attributed to random variation.
 Next step: investigate why.
+
+## Bug Fix in Motif Analysis (May 15, 2026)
+
+The numbers above were produced by buggy code. The bugs affected absolute magnitudes but not the direction of the finding. Corrected results below.
+
+What was wrong:
+1. **Self-citations counted as mutual citations.** The mutual-pair self-join `a.citing_id = b.cited_id AND a.cited_id = b.citing_id` matches any self-citation `(X → X)` against itself, so every self-cite was being counted as a "mutual pair". Self-cites per year were not evenly distributed (3,875 in 2020, 5,178 in 2022, 3,155 in 2024), so they inflated the pre-period baseline more than the post-period.
+2. **Every true mutual pair was double-counted.** The symmetric self-join produces two rows per unordered pair `{X, Y}` — once via `(a=X→Y, b=Y→X)` and once via `(a=Y→X, b=X→Y)`. The reported counts were ~2× the actual number of mutual pairs.
+3. **`motif_analysis.py` referenced an undefined variable** (`mutual_counts`) in its stat-test block, and imported `proportions_ztest` from `scipy.stats` where it does not exist (it lives in `statsmodels`). The script crashed before printing any stats, so the chart was produced but the in-script stat test never ran.
+4. **`stat_test.py` built an incoherent contingency table.** It computed `non_mutual = papers - pairs`, subtracting pair-counts from paper-counts as if they were the same unit. The chi-square test mechanically detected that the two ratios differed, but the table had no meaningful interpretation as counts of independent events.
+
+What was fixed:
+1. Added `WHERE a.citing_id < a.cited_id` to the self-join CTE. This filter simultaneously (a) excludes self-cites, since `X < X` is false, and (b) deduplicates each unordered pair `{X, Y}` to exactly one row.
+2. Removed the broken in-script stat block from `motif_analysis.py`. Statistical testing now lives only in `tests/stat_test.py`.
+3. Replaced the contingency table with a paper-level Bernoulli table: per period, how many papers participated in at least one mutual pair vs. how many did not. This is well-defined — each paper is one independent trial — and is computed from a `UNION` of both sides of the deduped mutual-pair set.
+
+## Corrected Results (May 15, 2026)
+
+Mutual pairs per year (deduplicated, self-cites excluded):
+- 2020: 3,010 pairs / 202,323 papers — 14.88 per 1000
+- 2021: 2,550 pairs / 201,597 papers — 12.65 per 1000
+- 2022: 1,989 pairs / 200,102 papers —  9.94 per 1000
+- 2023: 1,806 pairs / 200,063 papers —  9.03 per 1000
+- 2024: 1,631 pairs / 200,227 papers —  8.15 per 1000
+
+Paper-level participation (chi-square on per-paper Bernoulli outcome):
+- Pre-ChatGPT  (2020–2021):  8,860 of 403,920 papers in mutual pairs — 21.94 per 1000
+- Post-ChatGPT (2023–2024):  4,403 of 400,290 papers in mutual pairs — 11.00 per 1000
+- Chi-square statistic: 1,481.60, p-value ≈ 0 — statistically significant.
+
+Finding: participation in mutual citations dropped by ~50% after ChatGPT (from 21.94 to 11.00 papers per 1000). The previously reported 28% drop was understated because the pre-period was inflated by uneven self-cite counts and double-counting. The direction of the finding is unchanged — and stronger than before — and the interpretation in the next section still holds.
 
 Validity Checks (May 14, 2026)
 Before accepting the finding, we tested two potential sources of bias:
