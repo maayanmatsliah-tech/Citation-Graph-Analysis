@@ -33,15 +33,19 @@ papers = con.execute(
 in_mutual = {r[0]: r[1] for r in papers_in_mutual}
 paper_dict = {r[0]: r[1] for r in papers}
 
-pre_in_mutual = in_mutual.get(2020, 0) + in_mutual.get(2021, 0)
+# 2020 is excluded from the baseline: ~2x the within-year citation density of
+# any other year, with a heavy upper tail likely driven by COVID-era research
+# clustering. See docs/research_notes.md for the investigation. Including it
+# inflates the pre-ChatGPT baseline and makes any normal year look like a drop.
+pre_in_mutual = in_mutual.get(2021, 0)
 post_in_mutual = in_mutual.get(2023, 0) + in_mutual.get(2024, 0)
-pre_papers = paper_dict.get(2020, 0) + paper_dict.get(2021, 0)
+pre_papers = paper_dict.get(2021, 0)
 post_papers = paper_dict.get(2023, 0) + paper_dict.get(2024, 0)
 
 pre_not_in = pre_papers - pre_in_mutual
 post_not_in = post_papers - post_in_mutual
 
-print(f"Pre-ChatGPT  (2020-2021): {pre_in_mutual:,} of {pre_papers:,} papers in mutual pairs")
+print(f"Pre-ChatGPT  (2021):      {pre_in_mutual:,} of {pre_papers:,} papers in mutual pairs")
 print(f"Post-ChatGPT (2023-2024): {post_in_mutual:,} of {post_papers:,} papers in mutual pairs")
 
 pre_rate = pre_in_mutual / pre_papers * 1000
