@@ -66,7 +66,7 @@ What was fixed:
 2. Removed the broken in-script stat block from `motif_analysis.py`. Statistical testing now lives only in `tests/stat_test.py`.
 3. Replaced the contingency table with a paper-level Bernoulli table: per period, how many papers participated in at least one mutual pair vs. how many did not. This is well-defined — each paper is one independent trial — and is computed from a `UNION` of both sides of the deduped mutual-pair set.
 
-## Corrected Results (May 15, 2026)
+## Corrected Results — Initial Pass (May 15, 2026)
 
 Mutual pairs per year (deduplicated, self-cites excluded):
 - 2020: 3,010 pairs / 202,323 papers — 14.88 per 1000
@@ -78,9 +78,37 @@ Mutual pairs per year (deduplicated, self-cites excluded):
 Paper-level participation (chi-square on per-paper Bernoulli outcome):
 - Pre-ChatGPT  (2020–2021):  8,860 of 403,920 papers in mutual pairs — 21.94 per 1000
 - Post-ChatGPT (2023–2024):  4,403 of 400,290 papers in mutual pairs — 11.00 per 1000
-- Chi-square statistic: 1,481.60, p-value ≈ 0 — statistically significant.
+- Chi-square statistic: 1,481.60, p-value ≈ 0.
 
-Finding: participation in mutual citations dropped by ~50% after ChatGPT (from 21.94 to 11.00 papers per 1000). The previously reported 28% drop was understated because the pre-period was inflated by uneven self-cite counts and double-counting. The direction of the finding is unchanged — and stronger than before — and the interpretation in the next section still holds.
+These numbers looked too dramatic — a ~50% drop in two years is implausibly large — so we investigated whether the baseline year (2020) was anomalous.
+
+## 2020 Anomaly Investigation (May 15, 2026)
+
+We compared the per-paper distribution of within-year citations across years (a year's within-year citation density is the strongest determinant of how many mutual pairs can form in that year):
+
+| Year | Avg within-year refs/paper | Median | p95 | Max |
+|------|----------------------------|--------|-----|-----|
+| **2020** | **5.46** | 2 | **20** | **244** |
+| 2021 | 3.19 | 2 | 10 | 139 |
+| 2022 | 3.05 | 2 |  9 |  88 |
+| 2023 | 3.20 | 2 | 10 | 127 |
+| 2024 | 3.43 | 2 | 11 | 118 |
+
+2020 has roughly 2× the within-year citation density of any other year — but only in the upper tail. The median is the same (2 refs/paper) across all years.
+
+**Why this is a real anomaly, not a data error:**
+1. **Ingestion paths are not split by year.** Both the API ingester (`data/api_ingest.py`) and the S3 snapshot ingester (`data/citation_parser.py`) can contribute to any year — the S3 ingester has no publication-year filter and runs on `updated_date` partitions from 2022-2025. So 2020 went through the same code paths as 2021-2024; there's no mechanism to selectively inflate 2020.
+2. **Average refs OUT for 2020 is *lower* (78.64) than other years (~86).** If extra/duplicate ingestion were adding citation rows to 2020, we'd expect more refs per paper, not fewer.
+3. **The median is unchanged.** A uniform ingestion-side inflation would shift the whole distribution. Instead, the anomaly is concentrated in the upper tail (p95 = 20 vs. ~10, max = 244 vs. ~120), which is consistent with a real cluster of papers citing each other heavily.
+4. **Field distribution fits a COVID story.** Medicine is the #1 field in both 2020 and 2021, but the 2020 Medicine cohort is 11% larger than 2021's. The other top fields (Engineering, Bio, Environmental Science, Materials Science) are nearly identical between years.
+
+**Likely cause:** COVID-era research clustering. In 2020, large groups of medical/epidemiological/biomedical papers were published within weeks of each other and cited each other heavily — a tight, contemporaneous co-citation cluster that doesn't exist in normal years. The heavy tail of papers with 50-244 within-year references is exactly what you'd expect from COVID review papers and rapid-response studies released in waves.
+
+**Decision for this research:** We exclude 2020 from the pre-ChatGPT baseline. It is a real signal but a once-in-a-generation outlier — not a representative pre-ChatGPT year. Using it as the baseline would falsely make any normal year look like a "decline." The baseline is now 2021 alone; 2022 remains the transition/buffer year; 2023-2024 is the post-ChatGPT period.
+
+## Corrected Results — Final (May 15, 2026, 2020 excluded)
+
+To be filled in after re-running tests/stat_test.py with 2021 as the pre-ChatGPT baseline.
 
 Validity Checks (May 14, 2026)
 Before accepting the finding, we tested two potential sources of bias:
