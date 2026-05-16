@@ -108,7 +108,20 @@ We compared the per-paper distribution of within-year citations across years (a 
 
 ## Corrected Results — Final (May 15, 2026, 2020 excluded)
 
-To be filled in after re-running tests/stat_test.py with 2021 as the pre-ChatGPT baseline.
+Paper-level participation in mutual citations (chi-square on per-paper Bernoulli outcome):
+- Pre-ChatGPT  (2021):      3,786 of 201,597 papers in mutual pairs — 18.78 per 1000
+- Post-ChatGPT (2023–2024): 4,403 of 400,290 papers in mutual pairs — 10.99 per 1000
+- Chi-square statistic: 604.20, p-value ≈ 0.
+
+Finding: with 2020 removed, the drop is ~41% (down from the ~50% headline that 2020 had inflated). The direction is the same; the magnitude is smaller and more credible.
+
+**Caveats that still need attention before claiming a ChatGPT effect:**
+
+1. **The decline started before ChatGPT.** Per-year mutual rates: 2021 = 12.65, 2022 = 9.94, 2023 = 9.03, 2024 = 8.15 (per 1000 papers). The 21% drop from 2021 to 2022 happened *before* ChatGPT existed (launched Nov 30, 2022; 2022 papers were already written and submitted). A binary pre/post chi-square can't distinguish a step-change at ChatGPT from a pre-existing secular trend, and the data looks much more like a secular trend.
+2. **p ≈ 0 is mechanical at this sample size.** With ~200k papers per year, the chi-square test would call a 0.5% absolute difference "significant." The p-value isn't evidence of a meaningful effect; the effect size and the per-year trajectory are what matter.
+3. **Citation lag for 2024.** Refs IN per paper drops from 16.14 (2021) to 6.65 (2023) to 2.69 (2024) — recent papers haven't had time to accumulate citations. This may suppress the post-ChatGPT mutual count beyond any real behavior change.
+
+Next step before claiming a ChatGPT effect: replace the binary pre/post test with a per-year trajectory (e.g., linear regression on yearly rate, or a structural break test at Nov 2022) to see whether there is an actual discontinuity at ChatGPT, or just the continuation of a pre-existing decline.
 
 Validity Checks (May 14, 2026)
 Before accepting the finding, we tested two potential sources of bias:
