@@ -152,6 +152,10 @@ Pre vs post-ChatGPT slope (log-rate):
 
 **Conclusion.** The earlier chi-square "significant drop" reflected a real pre-existing decline in mutual citation rates, not a ChatGPT effect. We cannot attribute the observed change to ChatGPT with this data. The hypothesis as originally stated — that ChatGPT compressed peer discovery and changed mutual citation behavior — is **not supported**. The previously-reported secondary finding on citation age increase needs to be re-examined the same way (with a trajectory test) before attributing it to ChatGPT.
 
+**Caveat on statistical power.** With only 4 yearly data points (2021-2024), formal structural-break tests (Chow test, etc.) have very low power. What we can say is that the data is *consistent* with a continuous secular decline and *inconsistent* with the hypothesized step-change at ChatGPT — not that a small ChatGPT effect has been formally ruled out. Distinguishing those would require finer temporal resolution (monthly publication dates) or a longer post-ChatGPT window.
+
+**Restated finding (one line):** Decline in mutual citation rate is real and statistically significant (−13.2%/year, p = 0.028, R² = 0.94), but ChatGPT attribution is not supported by the trajectory.
+
 Chart: outputs/trajectory.png.
 
 Validity Checks (May 14, 2026)
