@@ -242,6 +242,49 @@ Built research/did_analysis.py. Idea: a secular trend should hit all fields equa
 - CS mutual citation rates went **down**, not up, post-ChatGPT. The hypothesis specifically predicted an **increase** in mutual citations from compressed peer discovery — that's directly falsified at the field level too.
 - There is no field-level pattern where ChatGPT-exposed fields show the predicted upward divergence. Combined with the trajectory test (no step-change at Nov 2022 in aggregate), this is converging evidence against the original hypothesis.
 
+## Volume Check — All Fields Combined (May 17, 2026)
+
+Question raised: do recent years just have more papers (with more low-quality ones nobody cites), and is that mechanically deflating the per-paper rates? Comparing equal 2-year windows before and after ChatGPT (Nov 2022), across all fields:
+
+| Period | Papers | Avg citations per paper | Avg mutual citations per paper |
+|--------|-------:|------------------------:|-------------------------------:|
+| Pre  (2021–2022) | 401,699 | 13.17  | 0.0215 |
+| Post (2023–2024) | 400,290 |  3.64  | 0.0157 |
+| Change | −0.4% | −72.3% | −27.1% |
+
+(Mutual count per paper = how many mutual pairs the paper participates in on average. A paper in 3 mutual pairs counts as 3.)
+
+Per-year breakdown:
+
+| Year | Papers | Total citations received | Avg cit/paper | Mutual pair memberships | Avg mut/paper |
+|------|-------:|-------------------------:|--------------:|------------------------:|--------------:|
+| 2021 | 201,597 | 3,158,708 | 15.67 | 4,865 | 0.0241 |
+| 2022 | 200,102 | 2,129,913 | 10.64 | 3,764 | 0.0188 |
+| 2023 | 200,063 | 1,197,181 |  5.98 | 3,504 | 0.0175 |
+| 2024 | 200,227 |   261,263 |  1.31 | 2,767 | 0.0138 |
+
+What this means for the volume/garbage concern:
+- **Paper counts are basically flat (−0.4%).** No paper-volume explosion to explain the rate drops.
+- **The 72% drop in overall citations per paper is a clock issue.** 2024 papers have had ~12 months to accumulate citations; 2021 papers have had 4+ years. The drop is steepest at the most recent year, which fits citation-lag exactly. This affects all fields roughly equally (CS −69%, the 5 empirical fields −74%), so it does not explain the CS-vs-empirical gap.
+- **Mutual citations drop only 27%, not 72%.** Mutual pairs require both papers to exist at the same time, so they aren't dragged down by years of citation accumulation. This is why the mutual-citation metric is more trustworthy than raw citation counts for recent years.
+- **The field-level DiD result survives.** Volume and citability moved the same way across fields, so the gap between CS (−19%) and the 5 empirical fields (−47%) is not explained by differential paper volume or paper quality. See research/did_volume_check.py for the per-field check.
+
+## Why Mutual Citations Are the Reliable Metric (May 17, 2026)
+
+A note on what we can and can't claim from this data.
+
+**The drop in overall citations per paper is not a real finding about citation behavior.** A 2021 paper has had four years to be discovered and cited. A 2024 paper has had only a few months. So when we see avg citations per paper fall from 15.67 in 2021 to 1.31 in 2024, that's mostly just newer papers not having had enough time to collect citations yet — not researchers citing less. We cannot claim that papers are getting cited less after ChatGPT from this number, because future citations of those recent papers haven't happened yet but will.
+
+**Mutual citations are different. They don't suffer from this problem.**
+
+A mutual citation requires paper A to cite paper B *and* paper B to cite paper A. Both citations have to exist in the published versions of the two papers. A paper's citation list is fixed when the paper is published — authors can't go back and add new references to a paper that's already out. So once both papers are published, the mutual pair between them either exists or it doesn't. Waiting another year won't create new mutual pairs between papers that already exist, because neither paper's citation list can change.
+
+This means:
+- For overall citations: 2024 numbers are an undercount because more citations will accumulate. Comparing 2024 to 2021 on this metric is unfair to 2024.
+- For mutual citations: 2024 numbers are already complete. Comparing 2024 to 2021 is a fair comparison.
+
+That's why the mutual citation rate is the right metric for this question, and why we can trust the 27% drop in mutual citations per paper while we cannot trust the 72% drop in overall citations per paper as a behavior signal.
+
 ## Final Verdict on the Hypothesis (May 17, 2026)
 
 **Original hypothesis:** mutual citations increased after ChatGPT because AI tools compressed peer discovery, creating citation loops that wouldn't have existed before.
