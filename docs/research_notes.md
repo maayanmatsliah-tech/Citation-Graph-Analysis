@@ -123,6 +123,37 @@ Finding: with 2020 removed, the drop is ~41% (down from the ~50% headline that 2
 
 Next step before claiming a ChatGPT effect: replace the binary pre/post test with a per-year trajectory (e.g., linear regression on yearly rate, or a structural break test at Nov 2022) to see whether there is an actual discontinuity at ChatGPT, or just the continuation of a pre-existing decline.
 
+## Trajectory Analysis (May 17, 2026)
+
+Built research/trajectory.py to fit an exponential-decay model `log(rate) = a + b·year` to the 2021-2024 yearly mutual citation rates (2020 excluded as a COVID outlier) and check whether the post-ChatGPT years fall below the pre-existing trend.
+
+Fitted trend (2021-2024):
+- Annual rate of change: **-13.2% per year**, R² = 0.944, slope p-value = 0.028.
+
+Residuals (observed minus trend):
+| Year | Observed | Trend predicts | Residual (log) | Interpretation |
+|------|----------|----------------|----------------|----------------|
+| 2021 | 12.65 | 12.13 | **+0.042** | above trend |
+| 2022 |  9.94 | 10.53 | **-0.057** | below trend (biggest drop, pre-ChatGPT) |
+| 2023 |  9.03 |  9.14 | **-0.012** | essentially on trend |
+| 2024 |  8.15 |  7.93 | **+0.027** | slightly above trend |
+
+Year-over-year decline:
+- 2021 → 2022: **-21.4%** ← biggest drop, but 2022 papers were written before ChatGPT existed
+- 2022 → 2023: -9.2%
+- 2023 → 2024: -9.8%
+
+Pre vs post-ChatGPT slope (log-rate):
+- Pre-ChatGPT (2021 → 2022):  **-0.241** (steepest)
+- Post-ChatGPT (2023 → 2024): **-0.103** (about half as steep)
+- Decline is **decelerating** after ChatGPT, not accelerating.
+
+**Interpretation.** A single exponential-decay trend fitted to 2021-2024 explains 94% of the variance in yearly mutual citation rates. The post-ChatGPT years (2023, 2024) sit essentially on that trend line — 2023 is 0.012 below it, 2024 is 0.027 above it. If ChatGPT had caused a meaningful break in citation behavior, we would expect the post-ChatGPT years to fall noticeably below the pre-existing trend. They do not. The largest single-year drop in the entire window is 2021 → 2022, which occurred entirely before ChatGPT existed (launched Nov 30, 2022; 2022 papers were written and submitted well before).
+
+**Conclusion.** The earlier chi-square "significant drop" reflected a real pre-existing decline in mutual citation rates, not a ChatGPT effect. We cannot attribute the observed change to ChatGPT with this data. The hypothesis as originally stated — that ChatGPT compressed peer discovery and changed mutual citation behavior — is **not supported**. The previously-reported secondary finding on citation age increase needs to be re-examined the same way (with a trajectory test) before attributing it to ChatGPT.
+
+Chart: outputs/trajectory.png.
+
 Validity Checks (May 14, 2026)
 Before accepting the finding, we tested two potential sources of bias:
 1. Field composition bias
