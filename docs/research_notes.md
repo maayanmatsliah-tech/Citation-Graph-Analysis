@@ -156,6 +156,62 @@ Pre vs post-ChatGPT slope (log-rate):
 
 **Restated finding (one line):** Decline in mutual citation rate is real and statistically significant (−13.2%/year, p = 0.028, R² = 0.94), but ChatGPT attribution is not supported by the trajectory.
 
+## Citation Age Re-examination (May 17, 2026)
+
+Applied the same trajectory test to the citation-age finding (previously reported as a 3.4× increase post-ChatGPT, "interpreted as researchers citing older established work"). Two checks: (a) fit a trend through 2021-2024 and look for a ChatGPT break, (b) test whether the metric is even a real behavior signal or an artifact of the works table's coverage profile.
+
+**Per-year average cited age (citing 2020-2024, cited 1950-2024):**
+
+| Citing year | Avg cited age (years) |
+|-------------|-----------------------|
+| 2020 | 0.09 |
+| 2021 | 0.83 |
+| 2022 | 1.39 |
+| 2023 | 1.89 |
+| 2024 | 2.33 |
+
+**Trajectory fit (2021-2024, 2020 excluded):**
+- Slope: +0.497 years per year
+- R² = **0.997**, slope p = 0.0014 (line fits the data nearly perfectly)
+- Residuals are all under 0.04 years — every year sits on the trend
+- Pre-ChatGPT slope (2021 → 2022): +0.56 (steepest)
+- Post-ChatGPT slope (2023 → 2024): +0.44 (shallower)
+
+Same shape as the mutual-citation analysis: continuous trend, no break at ChatGPT, slope slightly *decelerating* after ChatGPT. ChatGPT attribution is not supported here either.
+
+**But the bigger problem: the metric itself is structurally biased.** Two checks:
+
+1. **Where are the matched citations going?** For every citing year, 99.5-100% of matched citations are against papers in the dense 2020-2024 region of the works table. Only 854 to 2,498 citations per year reach pre-2020 cited papers — the works table's pre-2020 coverage (from the S3 snapshot) is too sparse for most pre-2020 citations to find a JOIN match.
+
+2. **What does "avg cited age" therefore measure?** Almost entirely: how many years of the dense 2020-2024 region are reachable backward from the citing year (since `citing_year ≥ cited_year`).
+   - 2020 can match only cited year 2020 → max possible age = 0 → avg 0.09
+   - 2021 can match 2020-2021 → avg 0.83
+   - 2022 can match 2020-2022 → avg 1.39
+   - 2023 can match 2020-2023 → avg 1.89
+   - 2024 can match 2020-2024 → avg 2.33
+
+   This is the exact shape we observe, and it would emerge from any citation behavior — even one in which every paper cites uniformly across all available years. The metric is mechanically constrained by the dense-region width, not by real citation behavior.
+
+**Conclusion for citation age.** The previously reported "3.4× increase in citation age after ChatGPT" is **primarily a measurement artifact** of the works table's year-coverage profile, not a real behavior change. With this dataset's coverage shape, the avg-age metric tracks "available cited years in the dense region," which grows monotonically with citing year by construction. The original interpretation ("researchers citing older established work instead of recent peers") cannot be supported from this data.
+
+The narrow side-check on pre-2020 cited papers (avg age 18.06 in 2020 vs. 24.17 in 2024) does show an apparent shift, but it's based on 854-2,498 citations per year — a tiny, non-random subset of pre-2020 papers (whichever happened to make it into the S3 snapshot). Not enough to support a real-world claim.
+
+**Overall conclusion (mutual + age, May 17, 2026).** Both headline findings collapse under trajectory testing:
+- Mutual citation rate: real decline, but pre-existing and continuous; no ChatGPT break.
+- Citation age increase: largely a data-coverage artifact; no behavior signal that survives controlled comparison.
+
+Neither finding supports the original hypothesis that ChatGPT changed citation behavior. To make a real claim here would require (a) finer temporal resolution (monthly publication data) and (b) a uniformly-indexed citation graph including dense pre-2020 coverage — neither available in the current data.
+
+## What This Does and Doesn't Tell Us (May 17, 2026)
+
+- **Found:** a real secular decline in mutual citation rates (−13.2%/year, R² = 0.94) that started before ChatGPT.
+- **Found:** the apparent citation-age increase is mostly a measurement artifact of the works table's year coverage, not a behavior signal.
+- **Ruled out:** that ChatGPT caused a discrete, yearly-resolution step-change in either metric. Both post-ChatGPT years sit on the pre-existing trend line.
+- **Did NOT rule out:** a small ChatGPT effect riding on top of the larger trend (4 data points isn't enough power); sub-annual effects; effects on dimensions we didn't measure (citation novelty, cross-field reach, semantic similarity, etc.); long-run effects that haven't manifested yet (~1.5 years of post-ChatGPT papers).
+- **Bottom line:** the *specific* hypothesis ("ChatGPT caused mutual citations to increase via compressed peer discovery") is not supported. The *broader* question ("did ChatGPT change citation behavior at all") is untestable with this dataset.
+
+**Methodological lesson:** at n ≈ 400,000, binary pre/post chi-square gives p ≈ 0 on any pre-existing trend — which is easy to mistake for a causal effect. The trajectory test (per-year trend + residuals + pre/post slope comparison) is what distinguished "real signal at the right time" from "real signal that predates the cause."
+
 Chart: outputs/trajectory.png.
 
 Validity Checks (May 14, 2026)
