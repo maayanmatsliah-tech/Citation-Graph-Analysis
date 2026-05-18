@@ -126,9 +126,23 @@ If a real ChatGPT effect exists, it should hit ChatGPT-exposed fields more than 
 - LOW  change (2021–22 → 2023–24):  9.09 →  4.86 per 1000 = **−46.5%**
 - DiD (log-rate): **+0.416**, SE 0.083, z = +5.02, p < 0.0001
 
-**Direction:** HIGH fell *less* than LOW — the opposite of "ChatGPT-exposed fields show the predicted increase." CS mutual citation rates went **down**, not up, post-ChatGPT. The hypothesis specifically predicted an *increase* in mutual citations from compressed peer discovery — directly falsified at the field level.
+**Direction:** HIGH fell *less* than LOW. Taken at face value, this is the DiD signature of a positive treatment effect: if LOW is the counterfactual for what CS would have done without ChatGPT, then CS dropped 18.9% when it "should have" dropped ~46.5%. The +0.416 log-rate point estimate is directionally **consistent with** the hypothesis's mechanism (ChatGPT-exposed fields diverging upward from non-exposed fields), not opposite to it. CS rate did decline in absolute terms, so the literal "mutual citations increased" framing didn't happen — but the *relative* direction DiD measures matches the hypothesis's prediction.
 
-**Caveat — pre-trends are not parallel.** From 2021 to 2022 (both pre-ChatGPT), HIGH fell 8% while LOW fell 33%, so the post-period gap is partly continuation of pre-existing field-specific dynamics, not a ChatGPT-induced divergence. With non-parallel pre-trends, the DiD point estimate doesn't cleanly identify a causal effect. What it does establish is that the *direction* predicted by the hypothesis is wrong in the most-exposed field.
+**Why the result still cannot support the hypothesis — pre-trends are not parallel.** From 2021 to 2022 (both pre-ChatGPT):
+
+- HIGH log change: log(29.98 / 32.59) = **−0.083**
+- LOW log change:  log(7.32 / 10.93)  = **−0.401**
+- Pre-period gap: HIGH already declining **~0.32 log-units/year slower than LOW** *before* ChatGPT existed.
+
+The pre-existing gap was opening at roughly the rate DiD attributes to the post-period treatment effect. So +0.416 is roughly what extrapolating the pre-existing field-level pattern would predict, with no ChatGPT needed.
+
+**What this means.** DiD here is **inconclusive**, not refuting:
+
+- The point estimate is *compatible* with a real ChatGPT lift in exposed fields that partially offset the secular decline.
+- The point estimate is *also* compatible with "CS and empirical fields have different secular decline rates for unrelated reasons, and that pre-existing pattern continued."
+- Non-parallel pre-trends mean DiD cannot separate these. It neither supports nor falsifies the hypothesis on its own.
+
+The aggregate trajectory test (no Nov-2022 break in the pooled mutual rate) remains the strongest single piece of evidence on the question.
 
 ## Volume Check — Paper Counts Are Flat
 
@@ -186,11 +200,16 @@ This is the exact shape we observe, and it would emerge from any citation behavi
 
 **Original hypothesis:** mutual citations increased after ChatGPT because AI tools compressed peer discovery, creating citation loops that wouldn't have existed before.
 
-**Verdict: rejected by this data, with reasonable confidence.** Three independent lines of evidence:
+**Verdict: not supported by this data.** The strongest single piece of evidence:
 
-1. **Aggregate trajectory** (`research/trajectory.py`): 2021–2024 mutual rate follows a smooth exponential decline (R² = 0.94). Post-ChatGPT years sit on the pre-existing trend line. No step-change at Nov 2022.
-2. **DiD by field exposure** (`research/did_analysis.py`): CS mutual rates *fell* post-ChatGPT (−18.9%), not rose. The most ChatGPT-exposed field did not show the predicted upward divergence.
-3. **Volume check** (`research/did_volume_check.py`): paper counts are flat (−0.4%); the field-level pattern is not explained by differential volume or by citation-lag effects.
+- **Aggregate trajectory** (`research/trajectory.py`): 2021–2024 mutual rate follows a smooth exponential decline (R² = 0.94). Post-ChatGPT years sit on the pre-existing trend line. No step-change at Nov 2022 — the years in which a ChatGPT effect should appear behave indistinguishably from the years before it existed.
+
+Two supporting checks that constrain how the data can be reinterpreted:
+
+- **DiD by field exposure** (`research/did_analysis.py`): the point estimate (+0.416) is directionally consistent with a partial ChatGPT lift in CS, but pre-trends were already non-parallel (HIGH declining ~0.32 log-units/year slower than LOW pre-ChatGPT), so DiD cannot identify a causal effect either way. It neither supports nor refutes the hypothesis on its own.
+- **Volume check** (`research/did_volume_check.py`): paper counts are flat (−0.4%) pre vs. post; the per-paper rates and field-level patterns are not explained by differential paper volume or citation-lag effects. Whatever is happening in the trajectory is happening on a clean denominator.
+
+The hypothesis as literally written ("mutual citations *increased* after ChatGPT") didn't happen — mutual rates declined. The deeper question — whether ChatGPT *changed* mutual citation behavior at all (e.g. cushioned an existing decline) — is **not falsified** by this data; it's just untestable here. The trajectory shows no break, but with only 2 post-ChatGPT years and a strong pre-existing trend, a small effect cannot be distinguished from no effect.
 
 ## What This Does and Doesn't Tell Us
 
