@@ -376,3 +376,37 @@ The trajectory test failed mostly because we have only 4 yearly data points — 
 ### Concrete next step
 
 Check what publication-date granularity exists in `citations.duckdb`, then run the year-gap distribution. Outputs from those two will tell us which of the other candidates is worth investing in.
+
+## Year-Gap Stratification of Mutual Pairs (May 18, 2026)
+
+Built `research/year_gap_analysis.py` to split mutual pairs by year-gap = `ABS(year_A - year_B)`. Both papers restricted to 2020-2024 (dense region).
+
+Per-stratum trajectory fits (2021-2024, 2020 excluded as COVID outlier):
+
+- aggregate (all gaps):       −13.2%/yr, R² = 0.94, p = 0.028
+- **gap = 0 (same year):**    **−10.9%/yr**, R² = 0.92, p = 0.043
+- **gap = 1 (one year apart):** **−23.9%/yr**, R² = 0.85, p = 0.078
+
+**Finding.** Same-year mutual pairs decline less than half as fast as one-year-apart pairs. The aggregate decline is driven by the lagged-pair collapse, not by contemporaneous peer discovery falling apart.
+
+**ChatGPT test on the hypothesis's home turf.** gap=0 is the precise axis the original hypothesis predicts should rise (compressed peer discovery → more contemporaneous mutual citations). Post-ChatGPT residuals on the gap=0 trend are +0.027 (2023) and +0.004 (2024) — essentially zero. Same-year pairs sit on the pre-existing trend line. Hypothesis closed even on its strongest possible axis.
+
+Chart: `outputs/year_gap.png`.
+
+## Forward-Citation Validity Check (May 18, 2026)
+
+Built `research/forward_citation_check.py` to test whether the gap=1 mutual decline above is mutual-reciprocity-specific or just inherited from a broader collapse in forward citations.
+
+Every gap=1 mutual pair requires a forward citation: the earlier paper citing the later paper, only possible via preprint awareness or late edits. Forward gap=+1 rate per 1000 citing-year papers:
+
+| citing_year | 2020 | 2021 | 2022 | 2023 |
+|---|---|---|---|---|
+| rate | 42.1 (COVID) | 24.7 | 25.1 | 16.6 |
+
+Manual 3-point fit on citing-years 2021-2023 gives roughly **−18%/yr**. The gap=1 mutual trajectory aligned to the same citing-years (pair-years 2022-2024) gives roughly −15%/yr. These are comparable.
+
+**Finding.** The gap=1 mutual decline is largely **inherited from a broader forward-citation collapse**, not a mutual-reciprocity-specific phenomenon. For comparison: same-year citations are flat (−0.5%/yr), backward gap=−1 citations decline modestly (−4.6%/yr). Forward citing specifically is what's dropping fast.
+
+**Likely mechanism.** Preprint dating dynamics. A forward citation only exists when the citing paper saw the cited paper as a preprint before its own publication. If OpenAlex's preprint→journal deduplication has changed over time, or if preprints reach journal publication faster, forward citations would mechanically decrease. Consistent with the earlier citation-age artifact finding — both point at OpenAlex date-coverage semantics shifting across years.
+
+**Script limitation.** In-script trajectory fits for forward gap=+1 got skipped because `citing_year=2024` has no observable forward citations within our 2020-2024 window. The −18%/yr is a manual 3-point read; for clean p-values and R² the script needs to fit on `citing_years 2021-2023` instead of `2021-2024`.
