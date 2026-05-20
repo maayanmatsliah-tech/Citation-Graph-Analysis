@@ -410,3 +410,19 @@ Manual 3-point fit on citing-years 2021-2023 gives roughly **−18%/yr**. The ga
 **Likely mechanism.** Preprint dating dynamics. A forward citation only exists when the citing paper saw the cited paper as a preprint before its own publication. If OpenAlex's preprint→journal deduplication has changed over time, or if preprints reach journal publication faster, forward citations would mechanically decrease. Consistent with the earlier citation-age artifact finding — both point at OpenAlex date-coverage semantics shifting across years.
 
 **Script limitation.** In-script trajectory fits for forward gap=+1 got skipped because `citing_year=2024` has no observable forward citations within our 2020-2024 window. The −18%/yr is a manual 3-point read; for clean p-values and R² the script needs to fit on `citing_years 2021-2023` instead of `2021-2024`.
+
+## Monthly Date Backfill (May 18, 2026)
+
+Built `data/backfill_dates.py` to add monthly publication dates and paper type to existing `works` rows. Targeted scope, not a full re-ingest.
+
+**Why.** The yearly-resolution trajectory test had no power against a structural break at ChatGPT's launch (4 data points). Monthly resolution gives ~48 points across 2021–2024 and makes a real Chow test possible. The `type` field separately enables splitting preprints from journal articles — directly testing the preprint-dating mechanism flagged by `forward_citation_check.py`.
+
+**Scope.** Backfills only the ~16k papers that actually participate in mutual pairs across 2020–2024 (the numerator papers). For monthly denominators the script either samples (`SAMPLE_PER_YEAR > 0`) or falls back to a `yearly_papers / 12` approximation. Default is the approximation since a uniform-within-year miscalibration doesn't matter for *detecting* a step-change at a specific month.
+
+**Two new columns on `works`:**
+- `publication_date` (DATE) — full ISO date, e.g. `2023-03-15`
+- `type` (TEXT) — `article`, `preprint`, `book-chapter`, ...
+
+**Run result.** 16,075 of 16,075 mutual-pair papers backfilled in 7.8 min, 0 errors. 100% coverage per year 2020–2024 on mutual-pair participants. `citations` table untouched.
+
+Script is resumable (queries `WHERE publication_date IS NULL` each run); a later pass to backfill the full ~1M papers is possible if denser denominators become useful.
