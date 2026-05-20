@@ -1,8 +1,8 @@
-# Mutual Citations After ChatGPT: A Hypothesis That Does Not Survive Trajectory Testing
+# Mutual Citations After ChatGPT: A Null Result and Its Limits
 
 ## Abstract
 
-ChatGPT, released in November 2022, plausibly compressed the process by which researchers discover and extract specific information from each other's work. If so, we should see this change reflected in the citation graph — in particular, in the rate of *mutual citations*, the unusual case where two papers cite each other. We test this hypothesis using ~1M papers from OpenAlex spanning 2020–2024. A first-pass test finds a large, statistically significant decline in mutual citation rate after ChatGPT, but this turns out to reflect a continuing pre-existing trend rather than any change at ChatGPT's launch. We confirm this with five additional checks: a trajectory fit (R² = 0.94, post-ChatGPT years sit on the pre-existing trend line), a cross-field difference-in-differences, a paper-volume control, a year-gap stratification that tests the hypothesis on its strongest predicted axis (same-year mutual pairs), and a forward-citation validity check that traces part of the decline to a likely artifact of preprint dating semantics in OpenAlex. The hypothesis as written — that ChatGPT *increased* mutual citation rates — is not supported. The broader question of whether ChatGPT changed citation behavior at all in smaller ways remains open and would require finer temporal resolution to test.
+ChatGPT, released in November 2022, plausibly compressed the process by which researchers discover and extract specific information from each other's work. If so, we should see this change reflected in the citation graph — perhaps, in particular, in the rate of *mutual citations*, the unusual case where two papers cite each other. We test this prediction using ~1M papers from OpenAlex spanning 2020–2024. A first-pass test finds a large, statistically significant decline in mutual citation rate after ChatGPT, but this appears to reflect a continuing pre-existing trend rather than any change at ChatGPT's launch. Four additional checks — a yearly trajectory fit, a cross-field difference-in-differences, a paper-volume control, and a year-gap stratification — are consistent with that reading, and a fifth check traces part of the decline to a likely artifact of preprint dating semantics in OpenAlex. **However, all of our tests are weak in important ways.** The trajectory fit has only four yearly data points; the two-year post-ChatGPT window may be shorter than the submission-to-publication lag for affected papers; and mutual citation rate is a narrow proxy for "compressed peer discovery" that may miss the mechanism entirely. We therefore do not claim to have refuted the hypothesis. What we have shown is that the most direct version of the predicted effect is not visible in this data at yearly resolution, and that the cause of the pre-existing decline — which the hypothesis cannot have produced — is itself not yet understood.
 
 ## 1. Introduction
 
@@ -12,9 +12,13 @@ This paper tests one specific prediction of that hypothesis: that *mutual citati
 
 Mutual citations are structurally rare. For one to exist, both authors must have been aware of each other's work at the time of writing, and each must have decided to cite it. Before ChatGPT, the cost of discovering and absorbing a recent or in-progress paper from another group was high enough that mutual citations were unusual. If ChatGPT really did compress that discovery process — surfacing relevant recent work faster, extracting the salient claim without requiring a full read — then citation loops that would not previously have formed should start forming. Mutual citation rate per 1000 papers is the natural quantity to look at.
 
-We find that this prediction is not borne out. Mutual citation rates declined after ChatGPT, but the decline started *before* ChatGPT existed and continued smoothly through and after its launch. We rule out the most obvious alternative explanations (paper volume, citation lag, field composition), and we show that even on the axis the hypothesis cares about most — same-year mutual pairs, where compressed peer discovery should matter most — there is no break at ChatGPT.
+We find that this prediction is not borne out at the resolution we can test. Mutual citation rates declined after ChatGPT, but the decline started *before* ChatGPT existed and continued smoothly through and after its launch. We rule out the most obvious alternative explanations for the headline rate change (paper volume, citation lag, field composition), and we find no break at ChatGPT even on the same-year mutual subset, where compressed peer discovery should matter most.
 
-The contribution of this paper is therefore a clean null result on a specific testable mechanism, together with a methodological note: at this sample size, a binary pre/post statistical test will declare almost any pre-existing trend "significant," which is easy to mistake for a causal effect.
+Two qualifications belong at the front, not in a limitations section at the back. First, mutual citations are themselves a *narrow* proxy for the hypothesized mechanism. ChatGPT cannot help paper A cite paper B if paper B does not yet exist when A is being written, and mutual reciprocity requires *both* directions to clear that bar. A compressed-discovery effect would more naturally show up in metrics like citation breadth, novelty, or time-to-first inbound citation. Our test addresses the most direct surface prediction of the hypothesis, not the only plausible one.
+
+Second, the data we have is thin in two ways that limit our statistical power. With four yearly observations across 2021–2024, any monotone sequence will fit a line well — the "trajectory" framework we rely on has limited ability to *distinguish* a smooth pre-existing decline from a smooth pre-existing decline plus a small ChatGPT effect that happens to push in the same direction. And with only two post-ChatGPT years, papers whose writing was substantially shaped by ChatGPT — given typical submission and review lag — may be largely absent from the data even now.
+
+What this paper contributes, then, is a careful documentation of what the most direct test of the hypothesis shows at yearly resolution, together with the auxiliary findings that emerged in the process: a real, pre-existing secular decline whose cause we cannot identify; evidence that part of that decline is likely a dataset artifact rather than a behavior change; and a methodological note that at this sample size, p-values from binary pre/post tests are misleading in a way that is easy to overlook.
 
 ## 2. Hypothesis and Definitions
 
@@ -29,6 +33,8 @@ A few definitions that recur throughout:
 - A **self-citation** is an edge from a paper to itself (an artifact in our raw data; excluded).
 
 The hypothesis predicts a *rate* increase, not just a count increase, because the total number of papers published each year fluctuates. We normalize throughout to "mutual pairs per 1000 papers," and separately check that paper volume itself is roughly flat in the period studied.
+
+It is worth being explicit about what mutual citations can and cannot capture. For a mutual pair to exist between papers A and B, paper B must already exist (at least as a preprint) when paper A is being written, *and* paper A must exist when paper B is being written. This rules out ChatGPT helping with discovery of work that simply hadn't been written yet, and it doubles the timing constraint — both authors have to clear the awareness bar within roughly the same writing window. ChatGPT-assisted discovery of recent literature would also and perhaps more naturally show up in *non-mutual* directional citations: a paper citing more recent work, more broadly, or with shorter time-to-discovery. Mutual citation rate is therefore one specific testable surface of the hypothesis, not the whole hypothesis. A null result on mutual rate does not by itself falsify the broader claim that ChatGPT changed citation behavior; it only constrains one channel through which that claim could have manifested.
 
 ## 3. Data
 
@@ -104,15 +110,17 @@ A 41% drop and a p-value indistinguishable from zero. By the usual reporting con
 
 It is also misleading. With sample sizes of ~400,000 per group, a chi-square test will return p < 0.001 on any difference of even a fraction of a percentage point. The *p-value at this scale is not evidence of a meaningful effect* — it is mostly evidence that the sample is large. What we actually want to know is whether the change reflects a behavior shift at the right time. For that we need the trajectory.
 
-### 5.3 The decline is pre-existing
+### 5.3 The decline appears to be pre-existing
 
 Fitting `log(rate) = a + b · year` to the four post-2020 yearly rates ([research/trajectory.py](../research/trajectory.py)) gives:
 
 - Annualized rate of change: **−13.2% per year**.
-- R² = 0.944 (one trend line explains 94% of the variation across years).
+- R² = 0.944.
 - Slope p-value: 0.028.
 
-The fit is tight, and the post-ChatGPT years sit essentially on the pre-existing line:
+A note on what R² means here is essential, because the test cuts both ways. A high R² on four data points is a much weaker claim than a high R² on, say, forty. Any monotone sequence of four points fits a straight line well by construction — there simply aren't enough degrees of freedom for a poor fit to register. So R² = 0.944 should be read as "the four yearly rates are monotone-ish and roughly evenly spaced in log-space," not as "we have established that a single trend really describes the data." In particular, this fit cannot distinguish a smooth pre-existing decline from a smooth pre-existing decline plus a small ChatGPT effect operating in the same direction; both would produce a high R² with the post-ChatGPT years roughly on-line. The trajectory test is therefore informative against the *strong* version of the hypothesis (a sharp, large increase post-ChatGPT — which is not what we see), but underpowered against a weaker version (a small effect riding the existing trend).
+
+With that caveat front-loaded: the post-ChatGPT years sit essentially on the line implied by the pre-ChatGPT data.
 
 | Year | Observed | Trend predicts | Residual (log) |
 |------|---------:|---------------:|---------------:|
@@ -126,7 +134,7 @@ The largest single-year drop in the entire window is **2021 → 2022, a 21.4% de
 - Pre-ChatGPT slope (log-rate from 2021 to 2022): −0.241.
 - Post-ChatGPT slope (log-rate from 2023 to 2024): −0.103.
 
-The decline is *decelerating* after ChatGPT, not accelerating. If ChatGPT had caused a meaningful break in citation behavior, we would expect the post-ChatGPT years to fall notably below the pre-existing trend. They do not.
+The decline is *decelerating* after ChatGPT, not accelerating. If ChatGPT had caused a sharp break in citation behavior — the version of the hypothesis the test can actually see — we would expect the post-ChatGPT years to fall notably below the pre-existing trend. They do not. We cannot, however, rule out a smaller effect riding the existing trend; see the R² caveat above. Chart: [outputs/trajectory.png](../outputs/trajectory.png).
 
 ### 5.4 The 2020 outlier
 
@@ -166,8 +174,10 @@ Third, **mutual citations only fall 27% rather than 72%** — almost three times
 
 A different test of the hypothesis: if ChatGPT really changed citation behavior, it should have affected ChatGPT-exposed fields more than fields where LLMs barely touch the workflow. We compare:
 
-- **HIGH exposure:** Computer Science (ChatGPT *is* research about and within CS).
+- **HIGH exposure:** Computer Science.
 - **LOW exposure:** Chemistry, Materials Science, Agricultural and Biological Sciences, Earth and Planetary Sciences, Immunology and Microbiology — empirical / wet-lab / field-data disciplines where ChatGPT changes day-to-day work much less.
+
+Both groupings are coarse. "Computer Science" as a single label conflates NLP, ML, systems, theory, compilers, formal methods and security — subfields whose actual ChatGPT exposure varies dramatically. Treating all of CS as uniformly "high exposure" is a stretch in one direction, and pooling the empirical fields into a single counterfactual is a stretch in the other. The test below is therefore a noisy approximation of the cross-field comparison the hypothesis actually invites.
 
 Per-year mutual citation rates ([research/did_analysis.py](../research/did_analysis.py)):
 
@@ -193,7 +203,7 @@ But it does not survive a check on the pre-trends. Difference-in-differences onl
 
 Before ChatGPT existed, HIGH was already declining ~0.32 log-units per year slower than LOW. That pre-existing gap is roughly the same size as the +0.416 "treatment effect" DiD attributes to the post-period. In other words, the apparent ChatGPT effect is what you would predict by extrapolating the pre-existing field-level pattern with no ChatGPT at all.
 
-DiD is therefore **inconclusive** rather than supportive: the point estimate is compatible with a real ChatGPT lift in exposed fields, but also compatible with "CS and empirical fields decline at different rates for unrelated reasons, and that pre-existing pattern continued." Non-parallel pre-trends mean DiD cannot separate the two stories.
+DiD is therefore **genuinely inconclusive**: the point estimate is compatible with a real ChatGPT lift in exposed fields *and* compatible with "CS and empirical fields decline at different rates for unrelated reasons, and that pre-existing pattern continued." Non-parallel pre-trends mean DiD cannot separate the two stories. We should not let this result narrow the conclusion in either direction. In particular, the direction of the point estimate is the direction the hypothesis predicts, which is worth registering — even if we cannot quantify how much of it (if any) is attributable to ChatGPT.
 
 ### 5.7 Year-gap stratification: testing the hypothesis on its strongest axis
 
@@ -243,24 +253,41 @@ The observed shape would emerge from *any* citation behavior, including one in w
 
 ## 6. Discussion
 
-The hypothesis tested in this paper is specific: ChatGPT caused mutual citations to *increase* after November 2022. That hypothesis is not supported. Mutual citation rates declined across our window, but the decline began before ChatGPT existed, follows a single smooth trend through and after its launch, and shows no break — including on the same-year subset where the hypothesized mechanism (compressed peer discovery) should be strongest.
+### What we can and cannot claim
 
-A weaker version of the question — *did ChatGPT change citation behavior at all?* — is harder to answer with this data. The trajectory test has only four yearly data points and therefore very limited statistical power against an effect smaller than the year-to-year noise. We cannot exclude a modest ChatGPT effect riding on top of the larger pre-existing trend, an effect concentrated in a sub-annual window, or an effect on dimensions we did not measure (citation novelty, cross-field reach, semantic similarity). What we *can* say is that the data we have is fully consistent with no ChatGPT effect at all in the mutual citation axis, and inconsistent with the specific large effect the original hypothesis predicted.
+The hypothesis tested in this paper has two layers. The narrow version — *ChatGPT caused a large, sharp increase in mutual citation rates after November 2022* — is not visible in our data. Yearly rates declined across the window, the decline began before ChatGPT existed, and the same-year subset (the strongest possible test of the proposed mechanism) shows no break either. Whatever ChatGPT may have done, it did not produce the dramatic mutual-citation lift the original hypothesis predicted.
 
-Several methodological points generalize beyond this study:
+The broader version — *ChatGPT changed citation behavior at all* — is something this paper does **not** establish either way. There are at least four reasons to keep that question open:
 
-**Sample size makes p-values misleading.** At n ≈ 400,000 the chi-square test would call a 0.5% absolute difference statistically significant. p ≈ 0 was the first thing we observed, and on its own it pointed in the wrong direction. The trajectory test — fitting a line through per-year rates, then asking where each year sits relative to the line — is what distinguished a real signal at the right time from a real signal that predates the cause.
+1. **The trajectory test is underpowered.** Four yearly data points cannot distinguish a smooth pre-existing decline from a smooth pre-existing decline plus a small ChatGPT effect operating in the same direction. Both produce a tight line with the post-ChatGPT years on or near it. A high R² at this resolution is structural, not evidential.
+2. **The window may be too short.** Submission-to-publication lag means many papers in our 2023–2024 post-ChatGPT cohort were largely written before the tool was a stable part of researcher workflow. The papers most likely to show a ChatGPT effect on citation behavior are 2024+, and 2024 is itself at the edge of OpenAlex's reliable coverage. We may be looking at the wrong years.
+3. **Mutual citation rate is a narrow proxy.** As discussed in §2 and §4.3, ChatGPT cannot help a paper cite work that does not yet exist, and mutual reciprocity requires both directions to clear that bar. A compressed-discovery effect would more naturally manifest in directional citations (more recent, broader, faster-arriving) than in mutual reciprocity. Our null on mutual rate constrains one channel; it does not foreclose others.
+4. **The DiD is genuinely inconclusive.** The point estimate is directionally consistent with the hypothesis but cannot be interpreted causally because of non-parallel pre-trends. We should not let this widen *or* narrow the conclusion.
 
-**Counterfactual claims need counterfactual controls.** Our cross-field DiD looked supportive on the surface (HIGH dropped less than LOW), but the pre-trends were already non-parallel, which is exactly the assumption DiD needs. The point estimate ended up being inconclusive — neither supporting nor falsifying — once the pre-trend was visible. We initially read this result as falsifying the hypothesis in the wrong direction, then later as supporting it. Both were wrong; it is neither.
+### The pre-existing decline is itself unexplained
 
-**Behavior signals and data-pipeline artifacts are easy to confuse.** Two of our supposed findings — the citation-age increase and (most likely) part of the forward-citation collapse — turned out to be artifacts of how the dataset itself is constructed rather than signals about how researchers behave. The citation-age artifact was obvious once we looked at where the matches were landing in the works table. The forward-citation artifact is more speculative but consistent with what is publicly known about OpenAlex's preprint deduplication. In any bibliometric study with a non-uniform underlying dataset, the relevant first question is "what would this metric look like if behavior were unchanged?" — and if the answer matches what is observed, the metric is not a behavior signal.
+Our most reliable finding is also our most unsettling one: mutual citation rates were already falling at roughly −13%/year before ChatGPT, and we do not know why. The trajectory documents the decline; it does not explain it.
+
+This matters for the central question in a way the paper has so far underplayed. We argue that the pre-existing decline cannot be a ChatGPT effect, because ChatGPT did not yet exist. That argument is sound on its face. But it relies on the assumption that the "pre-existing decline" we measure is itself a real behavior signal — that what looks like a smooth fall in mutual citation rate across 2021, 2022, 2023, 2024 reflects what researchers actually did, rather than what OpenAlex's pipeline records about what researchers did. The same kind of artifact we identified for citation age in §5.9, and that most plausibly explains the forward-citation collapse in §5.8, could in principle be contributing to the aggregate decline as well. We have no positive evidence that it is. But until the cause of the secular decline is independently understood — within-field rate changes vs. between-field composition shifts, rising citation concentration, dataset coverage drift — we cannot say with confidence what the "pre-existing trend" we are netting out actually represents.
+
+### Methodological notes that generalize
+
+Three observations from the project that apply beyond it:
+
+**Sample size makes p-values misleading.** At n ≈ 400,000 the chi-square test would call a 0.5% absolute difference statistically significant. Our headline first-pass result, p ≈ 0, was on its own a piece of structural arithmetic about the sample. Conversely, **fit quality is misleading at very small n.** Our R² = 0.94 on four points is the same kind of trap in the opposite direction: it sounds like strong evidence of a single trend, but four monotone points will fit a line by construction. Both failure modes have the same root — reporting a statistic without asking what its sampling distribution looks like at this n.
+
+**Counterfactual claims need counterfactual controls.** Our cross-field DiD looked supportive on the surface (HIGH dropped less than LOW), but the pre-trends were already non-parallel, which is exactly the assumption DiD needs. The result is genuinely inconclusive — it should widen uncertainty rather than narrow it in either direction.
+
+**Behavior signals and data-pipeline artifacts are easy to confuse.** Two of our findings — the apparent citation-age increase and (most likely) part of the forward-citation collapse — were dataset artifacts, not behavior. The citation-age artifact was straightforward to identify once we asked where the matches were landing in the works table. The forward-citation artifact is more speculative but consistent with what is publicly known about OpenAlex's preprint deduplication. In bibliometric studies generally, the first question to ask of any time-varying metric is: "what would this look like if behavior were unchanged but the dataset's coverage shifted over the same window?" If the answer matches what is observed, the metric is not a behavior signal.
 
 ## 7. Limitations
 
-- **Yearly resolution.** With four yearly data points across 2021–2024 we have very low power against any effect smaller than annual variation. Monthly resolution would help substantially; see §8.
-- **Two post-ChatGPT years.** Effects that take time to materialize — for example, citation patterns in papers that started development just after ChatGPT but were published in 2025 — would not appear in this window.
-- **Single citation graph.** All results depend on OpenAlex's coverage and dating semantics. The citation-age artifact and the likely preprint-dating artifact in forward citations both originate in the dataset, not in the analysis. Replicating against another source (e.g. Semantic Scholar, Crossref) would strengthen any claim.
-- **Field exposure was coarsely defined.** "Computer Science" is one OpenAlex field label and contains substantial within-field heterogeneity (NLP/ML, theory, systems, etc.) that would respond differently to ChatGPT. The §5.6 DiD is therefore a conservative test in one direction (broad CS) and a noisy test in another (within-CS variation washed out).
+- **Yearly resolution gives little statistical power.** Four yearly data points across 2021–2024 cannot distinguish a pre-existing trend from a pre-existing trend plus a small effect operating in the same direction. The R² = 0.94 we report is largely structural at this n. Monthly resolution would help substantially; see §8.
+- **Two post-ChatGPT years may not cover the affected papers.** Submission-to-publication lag in most fields is 6–24 months. Papers whose writing was substantially shaped by ChatGPT — adopted as a stable workflow tool in early 2023 — would mostly be 2024 papers at the earliest, and many would publish in 2025+. Our window may simply not include the relevant cohort.
+- **Mutual citation is a narrow proxy.** ChatGPT cannot help a paper cite work that did not exist when the paper was written, and mutual reciprocity requires both authors to clear the awareness bar within a narrow window. A compressed-discovery effect would more naturally show in directional metrics (citation breadth, novelty, time-to-first inbound citation). Our null on mutual rate constrains one channel through which the hypothesis could manifest; it does not test the others.
+- **The pre-existing decline is unexplained.** We use the pre-ChatGPT trajectory as a counterfactual for what would have happened without ChatGPT, but we have no positive explanation for why mutual citations were already falling. If part of that decline is itself a dataset artifact (as appears to be the case for the citation-age finding and likely for the forward-citation collapse), our counterfactual is partly built on artifact.
+- **Single citation graph.** All results depend on OpenAlex's coverage and dating semantics. Two of our supposed findings turned out to be dataset artifacts; we cannot rule out that others are. Replicating against another source (e.g. Semantic Scholar, Crossref, Web of Science) would substantially strengthen any conclusion about real behavior.
+- **Field exposure is coarsely defined.** "Computer Science" as a single OpenAlex label conflates NLP, ML, systems, theory, compilers, and security — subfields whose actual ChatGPT exposure varies dramatically. Treating all of CS as uniformly high-exposure is a stretch in one direction; pooling five empirical fields into a single counterfactual is a stretch in the other. §5.6 should be read as a rough, exploratory cross-field comparison, not a precise estimate.
 
 ## 8. Future Work
 
@@ -276,4 +303,8 @@ Four follow-up questions emerged from this analysis. The first two are the stron
 
 ## 9. Conclusion
 
-We tested a specific hypothesis — that ChatGPT increased the rate of mutual citations by compressing peer discovery — and found that the data does not support it. The mutual citation rate did decline after ChatGPT, but the decline started before ChatGPT existed, continues smoothly through and after its launch, and shows no break even on the same-year subset where the hypothesized mechanism should be strongest. The most striking results we initially obtained (a 41% headline drop, a 3.4× increase in cited paper age, a positive cross-field DiD) all weakened or reversed under closer inspection — illustrating, in our view, the principal methodological lesson of the project: at industrial sample sizes, statistical significance is cheap, and only tests that examine *when* and *where* a change appears can distinguish a behavior shift from a coincident pre-existing trend.
+We tested a specific prediction of a specific hypothesis: that ChatGPT, by compressing peer discovery, would increase the rate at which papers cite each other mutually. At yearly resolution, on the most direct measurement, this prediction is not visible in our data. The mutual citation rate did decline after ChatGPT, but the decline started before ChatGPT existed, continues smoothly through and after its launch, and shows no break even on the same-year subset where the hypothesized mechanism should be strongest.
+
+We are deliberately not claiming more than this. The trajectory test is underpowered against a smaller effect riding the existing trend; the two-year post-ChatGPT window may not yet include the papers most likely to be affected; mutual citation rate is a narrow proxy for the proposed mechanism; and the pre-existing decline we use as a counterfactual is itself not understood, and is plausibly contaminated by the same kind of dataset artifacts we identified in two of our auxiliary findings. The honest summary is that the *strong* version of the hypothesis is not visible in this data, and that any *weaker* version remains untestable with the resolution, window, and proxy available here.
+
+The most striking results we initially obtained — a 41% headline drop, a 3.4× increase in cited paper age, a positive cross-field DiD — all weakened or reversed under closer inspection. The principal methodological lesson of the project, then, runs in both directions: at large n, statistical significance is cheap and easy to overread; at small n, fit quality is cheap and easy to overread; and in both cases, only tests that examine *when* and *where* a change appears, *across more than one metric and one dataset*, can distinguish a real behavior shift from a coincident pre-existing trend or a coincident pipeline artifact.
