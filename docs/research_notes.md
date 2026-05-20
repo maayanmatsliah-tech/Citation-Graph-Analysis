@@ -426,3 +426,125 @@ Built `data/backfill_dates.py` to add monthly publication dates and paper type t
 **Run result.** 16,075 of 16,075 mutual-pair papers backfilled in 7.8 min, 0 errors. 100% coverage per year 2020–2024 on mutual-pair participants. `citations` table untouched.
 
 Script is resumable (queries `WHERE publication_date IS NULL` each run); a later pass to backfill the full ~1M papers is possible if denser denominators become useful.
+
+## Monthly Trajectory and Chow Test (2026-05-20)
+
+Ran `research/monthly_trajectory.py` (42 monthly observations, 2021-01 through 2024-06, 6-month tail censoring for ingestion latency, 2020 excluded as COVID outlier).
+
+Aggregate fit: −12.0%/yr, R² = 0.18 (much lower than yearly because monthly noise is real), slope p = 0.005.
+
+Chow test at Dec 2022: F = 3.97, **p = 0.027**. Pre slope −26.5%/yr, post slope **+16.6%/yr** (slope flipped sign). Initially looked like a real ChatGPT break.
+
+Robustness checks (`research/monthly_robustness.py`):
+- Deseasonalize: stronger break (p = 0.0055), post slope +9.5%/yr — break survives.
+- Exclude 2021: break vanishes (p = 0.17), post slope identical — small-n power issue.
+- Censoring sensitivity: break present at 6mo (p=0.027) and 9mo (p=0.034) censoring, absent at 3mo (p=0.30) and 12mo (p=0.46). Inconsistent.
+
+## Placebo Chow Test (2026-05-20) — the monthly break is artifactual
+
+Ran `research/placebo_chow.py` to sweep every candidate break date and to drop the visible Dec 2022 outlier.
+
+Result 1: **23 of 30 candidate break dates are "significant" at p < 0.05.** The Chow test fires almost everywhere. ChatGPT's date ranks **9th** by F-statistic — Jan 2022 (F=5.06, p=0.011) and Jan 2023 (F=5.02, p=0.012) are stronger "breaks."
+
+Result 2: Dec 2022 is the **single lowest-rate month in the dataset** (4.50/1000; surrounding months 7.86–9.78). Excluding only this one month drops the ChatGPT-date Chow result from p=0.027 to **p=0.081 (no break)** and collapses the post-slope from +16.6%/yr to **+1.7%/yr**.
+
+**Verdict.** The monthly Chow result is not a real break. It was driven by the conjunction of:
+- Dec 2022 being the single deepest seasonal dip (every Dec/Nov is a low; this one was lower);
+- January 2023 being seasonally elevated (Jan is the seasonal peak every year);
+- The Chow test having low specificity on a noisy series with strong seasonality at this n.
+
+Methodological note: Chow tests on small-n monthly series with seasonal cycles will fire indiscriminately. Always run a placebo sweep before claiming a break.
+
+## Pipeline-Drift / Preprint-Dedup Test (2026-05-20) — REFUTED
+
+Ran `research/pipeline_drift_check.py` to test the previously-hypothesized mechanism for the gap=1 forward-citation collapse: changing preprint→journal deduplication in OpenAlex.
+
+Result: **Forward citations are NOT preprint-driven.** Of all forward (gap > 0) citations in 2020-2024:
+- 78.3% are article → article
+- 9.7% are review → article
+- Only **3.0% touch a preprint at all** (i.e. either endpoint has type=preprint)
+- Only 1.6% are article → preprint specifically
+
+Whatever is causing the forward-citation collapse, it is not preprint deduplication. The article-to-article forward edges (the dominant 78%) are not affected by preprint dedup semantics.
+
+Field heterogeneity check: preprint-heavy fields (CS, Physics, Biochem) decline at −16.3%/yr average; other fields decline at −18.8%/yr average. Preprint-heavy fields decline *slower*, not faster — the opposite of what the dedup hypothesis predicted.
+
+The forward-citation collapse remains a real but unexplained phenomenon. Preprint dedup is ruled out as the mechanism.
+
+## OpenAlex Sample Composition Drift (2026-05-20)
+
+While running per-field analyses, discovered substantial classification/sample drift across years in our 200k-per-year sample:
+
+| Field | 2020 | 2021 | 2022 | 2023 | 2024 | Change |
+|-------|-----:|-----:|-----:|-----:|-----:|-------:|
+| Mathematics | 2,163 | 1,307 | 722 | 582 | 492 | **−77%** |
+| Psychology | 6,769 | 5,673 | 4,130 | 3,328 | 3,019 | **−55%** |
+| Social Sciences | 9,834 | 9,063 | 7,214 | 5,945 | 5,188 | **−47%** |
+| Earth & Planetary | 2,628 | 2,550 | 2,302 | 1,929 | 1,745 | **−34%** |
+| Engineering | 31,687 | 34,983 | 38,786 | 41,378 | 45,380 | **+43%** |
+| Materials Science | 13,003 | 13,871 | 15,044 | 16,295 | 18,621 | **+43%** |
+| Energy | 5,499 | 6,496 | 7,382 | 8,265 | 8,822 | **+60%** |
+| Chemical Engineering | 1,010 | 1,140 | 1,322 | 1,460 | 1,680 | **+66%** |
+
+Total papers per year is constant at ~200k by design. The mix shifts because pre-2024 papers were ingested mostly via S3 snapshots (`data/citation_parser.py`), while 2024 papers came mostly via the OpenAlex API (`data/api_ingest.py`). The two ingestion paths surface different field distributions.
+
+Mathematics dropping 77% is not real-world plausible. This contaminates any per-field cross-year comparison. The aggregate mutual rate decline must be tested against this confound.
+
+**Robustness check:** Restricted to 15 fields with stable or growing paper counts (excluding Math, Psych, Soc Sci, Medicine, etc), the aggregate mutual rate trajectory is *steeper* (−19.3%/yr, R²=0.90) than the full-sample trajectory (−13.2%/yr). The decline is not driven by the shrinking-classification fields. It is real and robust.
+
+**Caveat for any field-level analysis on this dataset:** per-field magnitudes are contaminated by classification/sample drift. Aggregates are not.
+
+## Within-vs-Between Decomposition (2026-05-20)
+
+Ran `research/field_heterogeneity.py`.
+
+Counterfactual decompositions of the 2021 → 2024 aggregate decline (18.78 → 8.82 per 1000):
+- **Counterfactual A** (fix every field's rate at 2021 value, use 2024's field composition): 17.36 per 1000 — composition shift alone explains ~14% of decline.
+- **Counterfactual B** (fix composition at 2021, use 2024's per-field rates): 9.39 per 1000 — within-field rate change alone explains ~94% of decline.
+
+The decline is essentially entirely **within-field**. The same fields, looked at year over year, show lower per-paper mutual citation rates. Sums exceed 100% due to the interaction term.
+
+## Citation Breadth Expansion (2026-05-20) — THE MAIN POSITIVE FINDING
+
+Ran a direct test of the "compressed peer discovery" hypothesis using a different metric: average number of distinct OpenAlex fields cited per citing paper.
+
+| Year | Cross-field share | Avg distinct cited fields per paper | Median |
+|------|------------------:|------------------------------------:|-------:|
+| 2020 | 28.6% | **1.66** | 1 |
+| 2021 | 31.1% | 2.06 | 2 |
+| 2022 | 31.5% | 2.42 | 2 |
+| 2023 | 33.0% | 2.78 | 2 |
+| 2024 | 35.0% | **3.11** | 3 |
+
+Citation breadth has **almost doubled in four years** (1.66 → 3.11; ×1.88). Median rose from 1 to 3 fields. Avg refs *out* per paper is flat across years (~85 per paper) — total citation budget is unchanged. What's changing is how broadly that budget is spent.
+
+**Robust to all known confounds:**
+- Restricted to 15 stable-volume fields (controlling for classification drift): 1.50 → 3.13 (×2.08)
+- Restricted to Computer Science papers only (single field, classification-anchored): 1.44 → 2.92 (×2.02)
+- The doubling holds in every cleaner subset we try.
+
+**Mechanistic link to the mutual citation decline.** If the same per-paper reference budget is spread over twice as many fields, the average within-field citation density per paper roughly halves. Mutual pair formation between two same-field papers requires both papers to spend some of their reference budget on each other; with broader citing, this becomes mechanically rarer. The aggregate mutual rate dropping 53% (18.78 → 8.82) and citation breadth doubling are quantitatively compatible with a single underlying broadening trend.
+
+**Not a ChatGPT effect.** The growth rate of breadth is *decelerating* over time (year-over-year increase: 24.5% → 17.1% → 14.9% → 12.1%), the opposite shape of what a discontinuous ChatGPT impact would produce. The trend was already underway before ChatGPT existed and is the dominant story of citation patterns in this period.
+
+## Reframed Conclusion (2026-05-20)
+
+Original hypothesis (ChatGPT compressed peer discovery → mutual citations *up*): **not supported.** Yearly trajectory shows no break; monthly Chow test fires but is artifactual on placebo testing.
+
+Actual finding: **citation patterns are broadening at a substantial, steady, pre-existing rate.** Papers cite work from nearly twice as many fields in 2024 as in 2020. This broadening provides a coherent mechanism for the 53% drop in mutual citation rates that we initially mistook for a ChatGPT effect.
+
+Eliminated mechanisms for the secular decline:
+- ChatGPT step change (no monthly break, placebo test refutes)
+- Paper volume / quality dilution (flat denominators)
+- Citation lag (mutual citations are lag-immune by construction)
+- Preprint deduplication (forward citations are 97% non-preprint)
+- Citation concentration (modest Gini change, insufficient magnitude)
+- Composition shift across fields (only ~14% of decline)
+
+Surviving mechanism: **citation breadth expansion (the same reference budget spread across more fields).** Robust to classification drift, monotone, large in magnitude, and quantitatively compatible with the mutual rate decline.
+
+Methodological byproducts worth keeping:
+- OpenAlex per-year samples show substantial field-composition drift (e.g. Math down 77% in our sample). Any per-field cross-year comparison on capped per-year samples needs an explicit field-stability check.
+- The citation-age "increase" remains a coverage artifact (works-table density profile).
+- The forward-citation collapse is real (~−18%/yr) but the preprint-dedup mechanism is wrong; cause now unknown.
+- Chow tests on small-n monthly series with seasonality fire indiscriminately. Always placebo-sweep candidate break dates.
