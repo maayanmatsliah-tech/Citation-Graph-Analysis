@@ -8,7 +8,7 @@ I set out to test whether ChatGPT, released in November 2022, increased the rate
 
 When ChatGPT was released to the public in November 2022, it changed how many researchers interact with the scientific literature. Instead of reading a paper end-to-end to extract a single claim, researchers can now ask a language model to surface a relevant passage. This plausibly compresses the front end of the research process — finding, filtering, and extracting from prior work — in ways that could leave a measurable fingerprint on what people cite.
 
-This project began by testing one specific prediction of that hypothesis: that *mutual citations* — where paper A cites paper B and paper B cites paper A — should have risen after ChatGPT. Mutual citations are structurally rare. They require both authors to discover each other's work and decide to cite it, within an overlapping writing window. If ChatGPT compressed that discovery process, citation loops that previously didn't form should start forming.
+This project began by testing what looked like a near-mechanical prediction of that hypothesis: that *mutual citations* — where paper A cites paper B and paper B cites paper A — should have risen after ChatGPT. The case for the prediction was strong. Pre-ChatGPT, mutual citations were structurally rare in the literature precisely because both authors had to independently discover each other's recent work within overlapping writing windows — a process that depended on chance encounters at conferences, shared collaborators, or weeks of manual literature searching, none of which scale to the volume of contemporary research output. ChatGPT collapses that cost: a researcher writing about topic X can now ask a language model for relevant recent work and get a direct answer in seconds. Papers remain editable through preprint, review, and revision stages, so if two peers each ran such a query at any point during writing, the citation loop should close where it previously could not. With hundreds of thousands of active researchers adopting ChatGPT through 2023–2024 and a pre-ChatGPT mutual-citation baseline of fewer than 20 pairs per 1000 papers, even modest adoption should have produced a clearly detectable lift. Going in, the hypothesis looked all but certain to hold.
 
 The mutual-citation prediction did not hold. But the path to ruling it out led to a much more substantial finding: citation patterns in the dataset are broadening at a striking rate. Papers in 2024 cite work from roughly 50% more distinct fields than papers in 2021. The change is monotone year over year, the total reference budget per paper is essentially flat, and the trend predates ChatGPT and is decelerating — so it cannot be attributed to any single technology shock. It is, however, the most plausible mechanistic explanation I can identify for the substantial decline in mutual citations observed in this period.
 
@@ -41,7 +41,7 @@ For each paper the database stores an ID, title, publication year, field, and �
 
 ### 4.1 Time windows and exclusions
 
-- **Pre-ChatGPT baseline:** 2021. 2020 is excluded from trajectory fits — it has roughly 2× the within-year citation density of other years, concentrated entirely in the upper tail and driven by the COVID-era Medicine cohort. Including it would falsely make any normal year look like a decline.
+- **Pre-ChatGPT baseline:** 2021. I originally used 2020 as the baseline, but the 2020 cohort turned out to have roughly 2× the within-year citation density of every other year in the window — concentrated entirely in the upper tail of the distribution rather than across it. Investigating the anomaly traced it to the COVID-era Medicine cohort: tight clusters of medical and epidemiological papers published in rapid waves and citing each other heavily within months. The signal is real but a once-in-a-generation outlier, not a representative pre-ChatGPT year. Keeping it would have made any normal year look like a decline by comparison, so I moved the baseline to 2021.
 - **Buffer:** 2022. ChatGPT launched on November 30, 2022; papers published in 2022 were largely written and submitted before its launch.
 - **Post-ChatGPT:** 2023–2024.
 
@@ -57,7 +57,7 @@ A paper's reference list is fixed at the moment of publication; authors cannot r
 
 For testing whether the mutual rate differs between two periods, I use a **chi-square test of independence** on a per-paper Bernoulli table: of papers from period P, what fraction participate in at least one mutual pair? Each paper is one independent trial.
 
-To distinguish a step-change at a specific date from a continuing pre-existing trend, I fit a **trajectory model** — a straight line through the logarithm of yearly rates — and ask where each year sits relative to the line. The **R²** statistic gives the fraction of variation the line explains.
+To distinguish a step-change at a specific date from a continuing pre-existing trend, I fit a **trajectory model** — a straight line through the *logarithm* of yearly rates — and ask where each year sits relative to the line. The log transform is the right choice because citation rates change multiplicatively rather than additively (a constant percentage decline per year is exponential, which is linear on a log scale but curved on a linear scale), and because rates are bounded below by zero, so a linear fit on raw rates can predict negative values. The slope coefficient then translates directly to an annualized percentage change. The **R²** statistic gives the fraction of variation the line explains.
 
 For finer temporal resolution I use the **Chow test**, which compares the fit of a single line across the whole series against the fit of two lines (one before, one after a candidate breakpoint). The reported F-statistic and p-value test whether the two-line fit is significantly better than the one-line fit.
 
@@ -85,6 +85,8 @@ Taking 2021 as baseline and 2023–2024 as post-ChatGPT, the per-paper Bernoulli
 
 Fitting `log(rate) = a + b · year` to the 2021–2024 yearly rates gives an annualized decline of **−13.2%/yr** (R² = 0.944, slope p = 0.028). Post-ChatGPT years sit essentially on the line implied by the pre-ChatGPT data (residuals: 2023 −0.012, 2024 +0.027). The largest single-year drop is **2021 → 2022 (−21.4%)**, before ChatGPT existed. The post-ChatGPT slope (−10.3%/yr) is actually *shallower* than the pre-ChatGPT slope (−21.4%/yr).
 
+![Yearly mutual citation rate trajectory, 2020–2024. 2020 (gray) is shown for context but excluded from the fit as a COVID outlier. The orange dashed line is the exponential-decay trend fit on 2021–2024 (blue). The red dotted vertical line marks ChatGPT's release at the end of November 2022. Both post-ChatGPT years sit on the pre-existing trend line.](../outputs/trajectory.png)
+
 A high R² on four data points should not be read as strong evidence for a single trend — four monotone points fit a line by construction. The right interpretation is that this test can rule out a *large* discontinuity at ChatGPT (which is absent here) but cannot rule out a small effect riding the existing trend.
 
 ### 5.3 Year-gap stratification: same-year pairs fail the hypothesis even on its home turf
@@ -107,20 +109,21 @@ The yearly trajectory has only four data points and limited power against a smal
 - Chow test at Dec 2022: F = 3.97, **p = 0.027**.
 - Pre slope: **−26.5%/yr**. Post slope: **+16.6%/yr**. Sign flip.
 
+![Monthly mutual citation rate trajectory, 2021–2024 (42 monthly observations after censoring the last 6 months for ingestion latency and excluding 2020 as a COVID outlier). The orange line is the pre-ChatGPT fit (−26.5%/yr) and the green line is the post-ChatGPT fit (+16.6%/yr); the red dotted vertical line marks the ChatGPT launch in late Nov 2022. Note the single very-low outlier point at Dec 2022, just below the break — that point is what drives the apparent sign-flip and is the focus of §5.5.](../outputs/monthly_trajectory.png)
+
 Robustness checks were mixed: the break survived deseasonalization (in fact got stronger, p = 0.0055), but was sensitive to censoring choice (present at 6- and 9-month tail censoring, absent at 3- and 12-month). Before claiming this as a ChatGPT effect I ran two specificity tests.
 
 ### 5.5 Placebo testing: the monthly break is a Dec 2022 outlier artifact
 
-I swept every candidate break date that leaves at least six months on each side. The result is unambiguous:
+**What a placebo test is.** A placebo test runs the same statistical analysis on data where the effect we're looking for cannot exist — typically by repeating the test at dates with no causal hypothesis attached. If the test claims to find an effect anyway at many of those placebo dates, then "finding an effect" is something the test does on noise, not signal, and any single positive result (including the one we care about) is uninformative on its own.
 
-- **23 of 30 candidate break dates** show p < 0.05.
-- ChatGPT's date ranks **9th** by F-statistic. Jan 2022 (F=5.06, p=0.011) and Jan 2023 (F=5.02, p=0.012) are stronger "breaks."
+**Where the candidate break dates come from.** The fitted monthly series has 42 observations: months from 2021-01 through 2024-06, after dropping 2020 (COVID outlier) and the last 6 months (ingestion latency). A Chow test needs at least 6 observations on each side of the candidate break to estimate two slopes, so the testable range is month 7 through month 36 of the series — **30 candidate break dates** in total. I ran the same Chow test at each of them.
 
-The Chow test is firing essentially everywhere on this series.
+**The result.** Of those 30 candidates, **23 produce p < 0.05**. Under the null hypothesis of no break, one would expect roughly 5% of tests (1–2 of 30) to fire by chance alone; the observed 23 of 30 is many times that. Ranked by F-statistic, the ChatGPT date sits at **9th of 30**. The strongest two candidates are Jan 2022 (F = 5.06, p = 0.011) and Jan 2023 (F = 5.02, p = 0.012), neither of which corresponds to any external event the hypothesis would predict. The test is firing essentially everywhere on this series — there is nothing statistically special about December 2022 from its perspective.
 
-Dec 2022 is also the **single lowest-rate month in the entire dataset** (rate 4.50/1000; surrounding months 7.86–9.78 per 1000). Removing only this one month from the analysis drops the ChatGPT-date Chow result from p = 0.027 to **p = 0.081 (no break)**, and the post-ChatGPT slope collapses from +16.6%/yr to **+1.7%/yr**.
+**Where Dec 2022's rate of 4.50/1000 comes from.** From the underlying monthly series used in §5.4: 75 mutual pairs anchored to Dec 2022, divided by the monthly denominator (200,102 papers in 2022 ÷ 12 = 16,675), times 1000 = **4.50 pairs per 1000 papers**. The four months around it are Oct 2022 = 7.86, Nov 2022 = 9.24, Jan 2023 = 11.46, Feb 2023 = 9.78. **Dec 2022 is the single lowest-rate month in the entire 2021–2024 monthly series.** Removing only this one month from the Chow test at the ChatGPT date drops the result from p = 0.027 to **p = 0.081 (no longer significant)**, and the post-ChatGPT slope collapses from +16.6%/yr to **+1.7%/yr**.
 
-The "break" was a conjunction of (a) Dec 2022 being the single deepest seasonal dip, (b) Jan 2023 being seasonally elevated (every January is the seasonal peak), and (c) the Chow test having low specificity on a noisy 42-point series with strong seasonality. This is a general lesson: **Chow tests on small-*n* monthly series should always be paired with a placebo sweep before claiming a break.**
+The "break" at Dec 2022 was therefore a conjunction of (a) one outlier month sitting exactly at the candidate break date, defining an unusually low post-period starting point; (b) Jan 2023 being seasonally elevated (every January in the data is a publication peak, see the monthly chart in §5.4); and (c) the Chow test having low specificity on a 42-point series with strong seasonality. This is a general methodological lesson: **Chow tests on small-*n* monthly series should always be paired with a placebo sweep before claiming a break.**
 
 ### 5.6 Aside: OpenAlex sample composition drift
 
@@ -142,7 +145,7 @@ A within-vs-between field decomposition (counterfactual: fix 2021 field rates, u
 
 ### 5.7 Citation breadth has risen ~50% in three years
 
-The central positive finding of this paper. For each citing paper, I compute the number of *distinct* OpenAlex fields appearing among its references, then average within each year cohort. The trend is monotone and large:
+This analysis points to citation breadth — the number of distinct fields a paper's references draw from — as a candidate mechanism for the secular decline documented in §5.1–§5.2. For each citing paper, I compute the number of *distinct* OpenAlex fields appearing among its references, then average within each year cohort. The trend is monotone and large:
 
 | Year | Citing papers | Avg distinct cited fields | Median | Cross-field cite share |
 |------|--------------:|--------------------------:|-------:|-----------------------:|
@@ -155,6 +158,8 @@ The central positive finding of this paper. For each citing paper, I compute the
 The average paper in 2024 cites work from **3.11 distinct fields**, up from 2.06 in 2021 — a factor of **1.51** in three years. The median rose from 2 to 3. Total references per paper is essentially flat across years (~85 refs/paper; range 76 to 85). Papers are not citing more *total* work; they are spreading the same budget more broadly. (2020 is shown for context but excluded from the headline comparison, consistent with its treatment as a COVID-era outlier in §5.4.)
 
 **Robustness to the sample-composition confound.** The same 2021 → 2024 comparison restricted to the 15 stable-volume fields gives 2.03 → 3.13 (×1.55). Restricted to Computer Science papers alone — chosen because CS is the largest field whose paper count grows steadily and monotonically across all five years (12.9k → 13.6k → 14.4k → 15.4k → 15.4k), so its measurement is anchored against the classification drift that contaminated Math, Psychology, and Social Sciences (§5.6) — it gives 1.79 → 2.92 (×1.63). The rise appears in every cleaner subset I try.
+
+![Average number of distinct fields cited per citing paper, 2020–2024, across three subsets: the full sample (blue), the 15 stable-volume fields (orange), and Computer Science alone (green). 2020 (open markers, dotted segment) is shown for context but excluded from the headline comparison as a COVID outlier. All three series rise monotonically through and beyond ChatGPT's launch (red dotted line, Nov 2022). The full-sample and stable-fields lines nearly overlap, indicating the rise is not driven by the classification drift documented in §5.6; the CS-only line sits lower in absolute level but rises at a similar slope, confirming the trend is visible even within a single classification-anchored field.](../outputs/citation_breadth.png)
 
 **Trend shape.** The year-over-year growth rate is *decelerating* (+24.5% → +17.1% → +14.9% → +12.1%), opposite to what a discrete ChatGPT-driven discontinuity would produce. The trend was already running steeply before ChatGPT existed and is not attributable to it. It is a longer-running shift in citation behavior, plausibly driven by improved cross-field search tools, rising interdisciplinarity in research, and the general accumulation of citation infrastructure.
 
