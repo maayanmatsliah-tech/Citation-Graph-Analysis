@@ -1,4 +1,4 @@
-# Citation Breadth Has Risen ~50% in Three Years: A Mutual-Citation Decline With an Identified Mechanism
+# A Hypothesis Not Supported: Testing ChatGPT's Effect on Citation Graph Cycles
 
 ## Abstract
 
@@ -71,13 +71,7 @@ I report the analyses in roughly the order they were performed. The early result
 
 ### 5.1 The aggregate mutual citation rate declined steadily
 
-| Year | Mutual pairs | Papers | Pairs per 1000 |
-|------|-------------:|-------:|---------------:|
-| 2020 | 3,010 | 202,323 | 14.88 *(COVID outlier)* |
-| 2021 | 2,550 | 201,597 | 12.65 |
-| 2022 | 1,989 | 200,102 |  9.94 |
-| 2023 | 1,806 | 200,063 |  9.03 |
-| 2024 | 1,631 | 200,227 |  8.15 |
+Across 2021–2024, mutual citation rates fell from **12.65** to **8.15** mutual pairs per 1000 papers — a 36% drop over three years. Year-over-year: 12.65 (2021) → 9.94 (2022) → 9.03 (2023) → 8.15 (2024). The 2020 cohort (14.88 per 1000) is shown for context in the trajectory chart in §5.2 but excluded from comparisons as the COVID outlier discussed in §4.1. Underlying paper volume is essentially flat across the window (~200k papers per year, range −0.4%), so this is a rate change, not a denominator effect.
 
 Taking 2021 as baseline and 2023–2024 as post-ChatGPT, the per-paper Bernoulli chi-square gives χ² = 604.20, p ≈ 0 — a nominally striking decline. But at n ≈ 400,000 the chi-square test would call almost any non-zero difference significant; the p-value here reflects sample size more than effect strength.
 
@@ -91,15 +85,11 @@ A high R² on four data points should not be read as strong evidence for a singl
 
 ### 5.3 Year-gap stratification: same-year pairs fail the hypothesis even on its home turf
 
-If ChatGPT compressed contemporaneous peer discovery, the cleanest prediction is on same-year mutual pairs. Restricting both papers to 2020–2024 and fitting log-trajectories on 2021–2024:
+If ChatGPT compressed contemporaneous peer discovery, the cleanest prediction is on same-year mutual pairs (gap = 0, both papers published in the same year). Stratifying the deduplicated mutual pairs by `gap = |year_A − year_B|` and fitting log-trajectories over 2021–2024 (both papers restricted to the dense 2020–2024 region):
 
-| Stratum | Annual change | R² |
-|---------|--------------:|---:|
-| All gaps | −13.2%/yr | 0.94 |
-| **gap = 0 (same year)** | **−10.9%/yr** | 0.92 |
-| gap = 1 (one year apart) | −23.9%/yr | 0.85 |
+![Mutual-pair rates stratified by year-gap, 2021–2024. The left panel shows per-gap trajectories; the right panel zooms on the cleanest comparison — same-year (gap=0, blue) vs one-year-apart (gap=1, coral) pairs. Same-year pairs decline at −10.9%/yr (R²=0.92); one-year-apart pairs decline twice as fast at −23.9%/yr (R²=0.85). Post-ChatGPT residuals on the gap=0 trend (the axis the hypothesis predicts should *rise*) are essentially zero (+0.027 in 2023, +0.004 in 2024). The red dotted line marks ChatGPT's launch.](../outputs/year_gap.png)
 
-Same-year pairs — the precise axis the hypothesis predicts should rise — decline smoothly at −11%/yr with post-ChatGPT residuals essentially zero (+0.027 and +0.004). The hypothesis fails even on its strongest possible axis. The aggregate decline is driven by lagged pairs, not by contemporaneous discovery breaking down.
+Aggregate mutual rate declines at −13.2%/yr; gap=0 (same year) declines at **−10.9%/yr**, gap=1 (one year apart) declines at **−23.9%/yr**. Same-year pairs — the precise axis the hypothesis predicts should rise — decline smoothly with post-ChatGPT residuals essentially zero (+0.027 and +0.004). The hypothesis fails even on its strongest possible axis, and the aggregate decline is driven by lagged pairs rather than by contemporaneous discovery breaking down.
 
 ### 5.4 Monthly resolution: an apparent ChatGPT break
 
@@ -127,15 +117,9 @@ The "break" at Dec 2022 was therefore a conjunction of (a) one outlier month sit
 
 ### 5.6 Aside: OpenAlex sample composition drift
 
-While running per-field analyses I discovered a substantial confound. Field paper counts in the 200k-per-year sample shift in ways that are not real-world plausible:
+While running per-field analyses I discovered a substantial confound. Field paper counts in the 200k-per-year sample shift in ways that are not real-world plausible — some fields collapse, others surge, none of them by amounts that reflect real publication trends:
 
-| Field | 2020 | 2021 | 2022 | 2023 | 2024 | Change |
-|-------|-----:|-----:|-----:|-----:|-----:|-------:|
-| Mathematics | 2,163 | 1,307 | 722 | 582 | 492 | **−77%** |
-| Psychology | 6,769 | 5,673 | 4,130 | 3,328 | 3,019 | **−55%** |
-| Social Sciences | 9,834 | 9,063 | 7,214 | 5,945 | 5,188 | **−47%** |
-| Engineering | 31,687 | 34,983 | 38,786 | 41,378 | 45,380 | **+43%** |
-| Chemical Engineering | 1,010 | 1,140 | 1,322 | 1,460 | 1,680 | **+66%** |
+![Sample composition drift across years for the most dramatic shifters. Left panel: raw paper counts per year on a log scale, showing that fields like Mathematics (red) and Social Sciences (pink) collapse while Engineering (blue) and Energy (green) surge. Right panel: the same fields indexed to 2020 = 100, putting both directions of drift on a common axis — Mathematics falls to ~23% of its 2020 count by 2024, while Chemical Engineering rises to ~166%. Total papers per year is held constant at ~200k by construction, so these shifts must net to zero across all fields. The red dotted line marks ChatGPT's launch but is unrelated to the drift, which is a dataset-pipeline artifact.](../outputs/field_drift.png)
 
 Total papers per year is constant by construction. The mix changes because 2020–2023 papers were ingested mostly via the OpenAlex S3 snapshot and 2024 papers via the API; the two pipelines surface different field distributions. Mathematics losing 77% of its papers is not a real phenomenon.
 
@@ -145,21 +129,13 @@ A within-vs-between field decomposition (counterfactual: fix 2021 field rates, u
 
 ### 5.7 Citation breadth has risen ~50% in three years
 
-This analysis points to citation breadth — the number of distinct fields a paper's references draw from — as a candidate mechanism for the secular decline documented in §5.1–§5.2. For each citing paper, I compute the number of *distinct* OpenAlex fields appearing among its references, then average within each year cohort. The trend is monotone and large:
-
-| Year | Citing papers | Avg distinct cited fields | Median | Cross-field cite share |
-|------|--------------:|--------------------------:|-------:|-----------------------:|
-| 2020 |  94,173 | 1.66 | 1 | 28.6% *(COVID outlier — excluded from headline comparison)* |
-| 2021 | 169,887 | **2.06** | 2 | 31.1% |
-| 2022 | 187,584 | 2.42 | 2 | 31.5% |
-| 2023 | 192,650 | 2.78 | 2 | 33.0% |
-| 2024 | 193,530 | **3.11** | 3 | 35.0% |
-
-The average paper in 2024 cites work from **3.11 distinct fields**, up from 2.06 in 2021 — a factor of **1.51** in three years. The median rose from 2 to 3. Total references per paper is essentially flat across years (~85 refs/paper; range 76 to 85). Papers are not citing more *total* work; they are spreading the same budget more broadly. (2020 is shown for context but excluded from the headline comparison, consistent with its treatment as a COVID-era outlier in §5.4.)
-
-**Robustness to the sample-composition confound.** The same 2021 → 2024 comparison restricted to the 15 stable-volume fields gives 2.03 → 3.13 (×1.55). Restricted to Computer Science papers alone — chosen because CS is the largest field whose paper count grows steadily and monotonically across all five years (12.9k → 13.6k → 14.4k → 15.4k → 15.4k), so its measurement is anchored against the classification drift that contaminated Math, Psychology, and Social Sciences (§5.6) — it gives 1.79 → 2.92 (×1.63). The rise appears in every cleaner subset I try.
+This analysis points to citation breadth — the number of distinct fields a paper's references draw from — as a candidate mechanism for the secular decline documented in §5.1–§5.2. For each citing paper, I compute the number of *distinct* OpenAlex fields appearing among its references, then average within each year cohort.
 
 ![Average number of distinct fields cited per citing paper, 2020–2024, across three subsets: the full sample (blue), the 15 stable-volume fields (orange), and Computer Science alone (green). 2020 (open markers, dotted segment) is shown for context but excluded from the headline comparison as a COVID outlier. All three series rise monotonically through and beyond ChatGPT's launch (red dotted line, Nov 2022). The full-sample and stable-fields lines nearly overlap, indicating the rise is not driven by the classification drift documented in §5.6; the CS-only line sits lower in absolute level but rises at a similar slope, confirming the trend is visible even within a single classification-anchored field.](../outputs/citation_breadth.png)
+
+The average paper in 2024 cites work from **3.11 distinct fields**, up from 2.06 in 2021 — a factor of **1.51** in three years. The median rose from 2 to 3. Total references per paper is essentially flat across years (~85 refs/paper), so papers are not citing more *total* work; they are spreading the same budget more broadly. The cross-field share of all citations also rises monotonically in the underlying data — from 31.1% of citations crossing field boundaries in 2021 to 35.0% in 2024 — consistent with the same broadening pattern. (2020 sits at 28.6% cross-field share and 1.66 fields per paper, but is excluded from the headline comparison as a COVID outlier per §4.1.)
+
+**Robustness to the sample-composition confound.** The same 2021 → 2024 comparison restricted to the 15 stable-volume fields gives 2.03 → 3.13 (×1.55). Restricted to Computer Science papers alone — chosen because CS is the largest field whose paper count grows steadily and monotonically across all five years (12.9k → 13.6k → 14.4k → 15.4k → 15.4k), so its measurement is anchored against the classification drift that contaminated Math, Psychology, and Social Sciences (§5.6) — it gives 1.79 → 2.92 (×1.63). The rise appears in every cleaner subset I try.
 
 **Trend shape.** The year-over-year growth rate is *decelerating* (+24.5% → +17.1% → +14.9% → +12.1%), opposite to what a discrete ChatGPT-driven discontinuity would produce. The trend was already running steeply before ChatGPT existed and is not attributable to it. It is a longer-running shift in citation behavior, plausibly driven by improved cross-field search tools, rising interdisciplinarity in research, and the general accumulation of citation infrastructure.
 
