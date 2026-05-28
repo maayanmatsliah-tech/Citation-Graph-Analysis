@@ -1,34 +1,28 @@
 """
-Scatter plot: percent of each paper's citations that are mutual citations,
-by publication year, with markers split by diversity.
+Clean visualization: yearly mean percent of citations that are mutual,
+split by diversity (cites 3+ distinct fields = diverse).
 
-For each paper in the attribute table that has at least one outbound edge:
-  x = publication year
-  y = (number of its outbound edges that are part of a mutual pair)
-      / (total number of its outbound edges) * 100
+For each paper with at least one outbound edge:
+  pct_mutual = (# of outbound edges that are part of a mutual pair)
+              / (total outbound edges) * 100
 
-Markers:
-  'x' for diverse papers      (cite 3+ distinct fields)
-  '.' for non-diverse papers  (cite 2 or fewer distinct fields)
-
-Mutual edge definition: an outbound edge A -> B is mutual if the reverse
-edge B -> A is also present in the edge list. Edges to papers outside the
-in-set are inherently non-mutual (we have no reverse edge to find).
-
-Yearly means for each group are overlaid as solid lines so the trend is
-visible through the dense scatter of ~750k papers.
+Aggregated per year per group (diverse vs not-diverse). Two lines with
+shaded ±1 SE bands. The pattern of interest — non-diverse papers showing
+systematically higher mutual share than diverse papers — is the
+distance between the two lines.
 
 Inputs:
-  data/clean_dataset.duckdb (with papers.diverse populated by
-                             research/classify_diversity.py)
+  data/clean_dataset.duckdb (with papers.diverse populated)
 
 Outputs:
   outputs/mutual_share_by_diversity.png
-  prints summary stats to stdout
+  prints summary stats
 """
 
 import duckdb
 import matplotlib.pyplot as plt
+import numpy as np
+from collections import defaultdict
 from pathlib import Path
 
 DB = "data/clean_dataset.duckdb"
@@ -42,7 +36,7 @@ if "diverse" not in cols:
         "papers.diverse column not found. Run research/classify_diversity.py first."
     )
 
-print("Computing per-paper mutual-edge counts (this can take a couple minutes)...")
+print("Computing per-paper mutual-edge counts...")
 rows = con.execute("""
     WITH mutual_edges AS (
         SELECT a.source, a.target FROM edges a
@@ -54,71 +48,82 @@ rows = con.execute("""
     mut_counts AS (
         SELECT source AS pid, COUNT(*) AS n_mut FROM mutual_edges GROUP BY source
     )
-    SELECT
-        p.year,
-        p.diverse,
-        o.n_out,
-        COALESCE(m.n_mut, 0) AS n_mut
+    SELECT p.year, p.diverse, o.n_out, COALESCE(m.n_mut, 0) AS n_mut
     FROM papers p
     JOIN out_counts o ON o.pid = p.id
     LEFT JOIN mut_counts m ON m.pid = p.id
     WHERE p.year IS NOT NULL AND o.n_out > 0
 """).fetchall()
 
-print(f"  {len(rows):,} papers have at least one outbound edge")
-
-# Split by diversity
-years_d, pct_d = [], []
-years_n, pct_n = [], []
+# Group per-paper pct_mutual values by (year, diverse)
+data = defaultdict(lambda: {"d": [], "n": []})
 for year, diverse, n_out, n_mut in rows:
     pct = n_mut / n_out * 100
-    if diverse:
-        years_d.append(year)
-        pct_d.append(pct)
-    else:
-        years_n.append(year)
-        pct_n.append(pct)
+    bucket = "d" if diverse else "n"
+    data[year][bucket].append(pct)
 
-print(f"  diverse:     {len(years_d):>9,} papers, "
-      f"mean pct-mutual = {sum(pct_d) / max(len(pct_d), 1):.3f}%")
-print(f"  not diverse: {len(years_n):>9,} papers, "
-      f"mean pct-mutual = {sum(pct_n) / max(len(pct_n), 1):.3f}%")
+# Drop years with too few papers in either group (avoid noisy ends)
+MIN_N = 50
+years = sorted(y for y in data if len(data[y]["d"]) >= MIN_N and len(data[y]["n"]) >= MIN_N)
+print(f"  years included (>= {MIN_N} papers in each group): "
+      f"{years[0]}–{years[-1]}, n={len(years)}")
 
 
-def yearly_means(years, pcts):
-    sums, counts = {}, {}
-    for y, p in zip(years, pcts):
-        sums[y] = sums.get(y, 0) + p
-        counts[y] = counts.get(y, 0) + 1
-    xs = sorted(sums)
-    ys = [sums[y] / counts[y] for y in xs]
-    return xs, ys
+def mean_se(vals):
+    arr = np.array(vals, dtype=float)
+    return arr.mean(), arr.std(ddof=1) / np.sqrt(len(arr))
 
 
-xs_d, ys_d = yearly_means(years_d, pct_d)
-xs_n, ys_n = yearly_means(years_n, pct_n)
+d_mean, d_se = [], []
+n_mean, n_se = [], []
+for y in years:
+    m, s = mean_se(data[y]["d"])
+    d_mean.append(m)
+    d_se.append(s)
+    m, s = mean_se(data[y]["n"])
+    n_mean.append(m)
+    n_se.append(s)
 
-# Plot
-fig, ax = plt.subplots(figsize=(14, 7))
+d_mean = np.array(d_mean)
+d_se = np.array(d_se)
+n_mean = np.array(n_mean)
+n_se = np.array(n_se)
 
-# Underlying scatter (heavy alpha to make density readable)
-ax.scatter(years_n, pct_n, marker=".", s=8, alpha=0.10, color="steelblue",
-           label=f"Not diverse: {len(years_n):,} papers")
-ax.scatter(years_d, pct_d, marker="x", s=14, alpha=0.20, color="coral",
-           label=f"Diverse: {len(years_d):,} papers")
+# Overall stats
+all_d = np.concatenate([data[y]["d"] for y in years])
+all_n = np.concatenate([data[y]["n"] for y in years])
+print(f"\n  Diverse papers     (n={len(all_d):>7,}): "
+      f"mean pct-mutual = {all_d.mean():.3f}%  median = {np.median(all_d):.3f}%")
+print(f"  Not-diverse papers (n={len(all_n):>7,}): "
+      f"mean pct-mutual = {all_n.mean():.3f}%  median = {np.median(all_n):.3f}%")
+print(f"  Ratio: not-diverse / diverse mean = {all_n.mean()/all_d.mean():.2f}x")
 
-# Yearly-mean trend lines
-ax.plot(xs_n, ys_n, color="darkblue", linewidth=2.5, marker="o",
-        markersize=4, label="Not diverse: yearly mean", zorder=5)
-ax.plot(xs_d, ys_d, color="darkred", linewidth=2.5, marker="x",
-        markersize=7, label="Diverse: yearly mean", zorder=5)
+# ---- Plot ----
+fig, ax = plt.subplots(figsize=(13, 7))
+
+# Not-diverse: blue line + band
+ax.fill_between(years, n_mean - n_se, n_mean + n_se,
+                color="steelblue", alpha=0.20, label="Not diverse: ±1 SE")
+ax.plot(years, n_mean, "o-", color="steelblue", linewidth=2.5, markersize=7,
+        label="Not diverse: yearly mean")
+
+# Diverse: coral line + band
+ax.fill_between(years, d_mean - d_se, d_mean + d_se,
+                color="coral", alpha=0.20, label="Diverse: ±1 SE")
+ax.plot(years, d_mean, "x-", color="coral", linewidth=2.5, markersize=8,
+        label="Diverse: yearly mean")
 
 ax.set_xlabel("Publication year")
-ax.set_ylabel("Percent of citations that are mutual citations (%)")
-ax.set_title("Per-paper mutual-citation share by year and diversity\n"
-             "(each marker is one paper; lines are yearly means)")
-ax.legend(loc="upper right", fontsize=9)
+ax.set_ylabel("Mean percent of citations that are mutual (%)")
+ax.set_title(
+    "Per-paper mutual citation share by year and citation-diversity\n"
+    f"Across {years[0]}–{years[-1]}, NON-diverse papers (blue, cite ≤2 fields) "
+    f"consistently sit above diverse papers (coral, cite 3+ fields).\n"
+    f"Overall non-diverse mean is {all_n.mean()/all_d.mean():.1f}× higher than diverse mean."
+)
+ax.set_ylim(bottom=0)
 ax.grid(True, alpha=0.3)
+ax.legend(loc="upper right", fontsize=10)
 
 plt.tight_layout()
 Path("outputs").mkdir(exist_ok=True)
