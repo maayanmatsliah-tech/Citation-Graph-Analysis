@@ -1,5 +1,7 @@
 citations.duckdb
 AWSCLIV2.pkg
-data/
-data/
+archive/
 ingestion.log
+
+ # ignore large data artifacts
+ data/
