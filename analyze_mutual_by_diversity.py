@@ -3,7 +3,7 @@ Stages 2-4 of the plan: classify diverse, count mutual citations, plot.
 
 Inputs (CSV or Parquet; DuckDB reads either):
   attributes : columns id, year, field  (extra columns ignored)
-  edges      : columns source, target
+  edges      : columns source, targets (";"-joined target ids, one row per source)
 
 Steps:
   1. diverse: a paper is `diverse` if the DISTINCT fields of the papers it cites
@@ -48,7 +48,8 @@ con.execute(f"""
 """)
 con.execute(f"""
     CREATE TABLE edges AS
-    SELECT CAST(source AS VARCHAR) AS source, CAST(target AS VARCHAR) AS target
+    SELECT CAST(source AS VARCHAR) AS source,
+           UNNEST(string_split(CAST(targets AS VARCHAR), ';')) AS target
     FROM read_csv_auto('{EDGES}')
 """)
 n_attr = con.execute("SELECT COUNT(*) FROM attr").fetchone()[0]
