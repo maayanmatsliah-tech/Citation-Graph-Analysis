@@ -1,34 +1,46 @@
 # Citation Graph Analysis
 
-Citation data from millions of academic papers (OpenAlex), stored locally and analyzed to investigate whether mutual citations — where two papers cite each other — increased after ChatGPT's release in November 2022.
+Analysis of OpenAlex citation data to test whether mutual citations — pairs of
+papers that cite each other — grew faster than paper volume after ChatGPT's
+release (November 2022), and whether that growth varies with a paper's field
+diversity.
 
-## Research Question
+## Question & hypothesis
 
-Did mutual citations increase after ChatGPT's release at a rate that outpaces the growth in paper volume alone — and if so, does this reflect AI tools compressing the research discovery process?
-
-## Hypothesis
-
-Mutual citations increased after ChatGPT because researchers can now find and extract specific information from papers instantly, without reading them in full. This compressed the discovery process enough to create citation loops that wouldn't have existed before.
+Did mutual citations rise after ChatGPT faster than overall paper growth? The
+hypothesis: AI tools let researchers locate and extract specifics from papers
+without reading them in full, compressing discovery enough to create citation
+loops that wouldn't otherwise exist.
 
 ## Data
 
-Source: [OpenAlex](https://openalex.org/) — S3 snapshot for older papers, API for 2020–2024. Public, no account needed.
+Source: [OpenAlex](https://openalex.org/) — public, no account needed
+(S3 snapshot for older papers, API for recent years). Tables are built locally
+into an on-disk DuckDB; raw `data/` is not committed.
 
 ```bash
 pip install boto3 duckdb matplotlib requests
-python3 citation_parser.py   # streams from S3
-python3 api_ingest.py        # pulls 2020-2024 from API
+python3 build_tables_from_snapshot.py
 ```
 
 ## Structure
 
 ```
-citation-graph-analysis/
-├── citation_parser.py        # ingestion from S3 snapshot
-├── api_ingest.py             # ingestion from OpenAlex API
-├── data/                     # local database (not committed)
-├── research/                 # analysis scripts for current hypothesis
-├── exploration/              # earlier exploratory scripts
-├── docs/                     # research notes and hypothesis documents
-└── outputs/                  # saved charts
+├── build_tables_from_snapshot.py   # ingest OpenAlex snapshot -> local tables
+├── analyze_mutual_by_diversity.py  # top-level mutual-by-diversity analysis
+├── analysis/                       # pipeline: find mutual pairs, diversity, plots
+├── research/                       # current-hypothesis scripts (per-year, significance)
+├── docs/                           # findings and write-up
+├── data/                           # local DuckDB + CSVs (not committed)
+└── outputs/                        # saved charts + their source CSVs
 ```
+
+## Outputs
+
+- `outputs/mutual_citation_rate/rate_by_diversity.png` — mutual-citation rate
+  (% of citations reciprocated) by year, per diversity group.
+- `outputs/mutual_paper_share/share_by_diversity.png` — share of papers with
+  any mutual citation by year, per diversity group.
+
+Both exclude diversity group 0 and (year, group) cells with fewer than 10K
+papers. Each PNG sits next to the CSV it was generated from.
