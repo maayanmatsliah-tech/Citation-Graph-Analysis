@@ -32,7 +32,7 @@ SRC = os.environ.get("SRC", "data/attributes.duckdb")
 EDGES = os.environ.get("EDGES", "data/edges.csv")
 COUNTS = os.environ.get("COUNTS", "data/_div_counts.csv")
 NEW = os.environ.get("NEW", "data/attributes_new.duckdb")
-EXPECT = int(os.environ.get("EXPECT", "413392893"))
+EXPECT = int(os.environ.get("EXPECT", "148726765"))
 csv.field_size_limit(sys.maxsize)
 
 
