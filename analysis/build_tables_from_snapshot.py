@@ -31,7 +31,13 @@ Env:
   EDGES_OUT   default data/sample_edges.csv
   PROGRESS    checkpoint file (default data/.snapshot_progress.tsv)
 
-Usage:  ./venv/bin/python build_tables_from_snapshot.py
+NOTE: there is NO work-type filter here, so OpenAlex non-paper records
+(datasets, author-profile "other", paratext, peer-review) are ingested; these
+lack a topic and end up as field='Unknown' (94% dated 2024/2025). The dataset
+is cleaned downstream by dropping field='Unknown' (see analysis/clean_dataset.py).
+A future re-ingest should filter on work `type` instead.
+
+Usage:  ./venv/bin/python analysis/build_tables_from_snapshot.py
 """
 
 import csv
