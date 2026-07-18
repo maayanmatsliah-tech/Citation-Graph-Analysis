@@ -34,6 +34,8 @@ OUT_CSV = os.environ.get("OUT_CSV", "outputs/mutual_citation_rate/mutual_rate_by
 OUT_PNG = os.environ.get("OUT_PNG", "outputs/mutual_citation_rate/rate_by_diversity.png")
 MEM = os.environ.get("MEM", "10GB")
 MIN_PAPERS = int(os.environ.get("MIN_PAPERS", "10000"))
+MIN_YEAR = int(os.environ.get("MIN_YEAR", "0"))
+MAX_YEAR = int(os.environ.get("MAX_YEAR", "9999"))
 GROUPS = ["1", "2", "3", "4", "5", "6+"]
 
 
@@ -77,6 +79,7 @@ def compute():
             JOIN a.attributes att ON CAST(ltrim(att.id,'W') AS BIGINT) = c.id
             LEFT JOIN nmut m ON m.id = c.id
             WHERE c.n_cited >= 1
+              AND att.year BETWEEN {MIN_YEAR} AND {MAX_YEAR}
         )
         SELECT year,
                CASE WHEN dc >= 6 THEN '6+' ELSE CAST(dc AS VARCHAR) END AS grp,

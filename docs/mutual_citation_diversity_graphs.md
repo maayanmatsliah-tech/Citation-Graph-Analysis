@@ -3,13 +3,13 @@
 
 ## 1. Mutual-citation rate by diversity group
 
-![Mutual-citation rate by year, per diversity group](../outputs/mutual_citation_rate/rate_by_diversity.png)
+![Mutual-citation rate by year, per diversity group](../outputs/graphs_with_self_citations/rate_by_diversity.png)
 
 Each individual citation a paper makes is less likely to be returned the more fields that paper cites.
 
 ## 2. Share of papers with any mutual citation, by diversity group
 
-![Share of papers with any mutual citation, per diversity group](../outputs/mutual_paper_share/share_by_diversity.png)
+![Share of papers with any mutual citation, per diversity group](../outputs/graphs_with_self_citations/share_by_diversity.png)
 
 More interdisciplinary papers are more likely to receive at least one reciprocated citation. Every diversity group is declining together over time.
 
