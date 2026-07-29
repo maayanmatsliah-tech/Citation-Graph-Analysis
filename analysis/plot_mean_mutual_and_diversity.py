@@ -129,6 +129,11 @@ def write_outputs(rows):
     ax2.set_ylabel("Mean diversity count per paper (raw, no 6+ bucketing)", color=c2)
     ax2.tick_params(axis="y", labelcolor=c2)
 
+    # anchor both axes at 0 so the near-flat diversity series isn't magnified
+    # into visual noise by autoscaling (see backfill note)
+    ax1.set_ylim(bottom=0)
+    ax2.set_ylim(bottom=0)
+
     ax1.set_title("Mean mutual citations vs mean diversity count, by year\n"
                   "(papers citing >=1 work; diversity_count counted raw)")
     ax1.legend(handles=[l1, l2], loc="upper right", fontsize=9)

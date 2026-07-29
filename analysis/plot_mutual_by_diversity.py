@@ -127,6 +127,7 @@ def write_outputs(rows):
     ax.set_title("Mutual-citation rate by year, per diversity group\n"
                  "(group 0 + cells <10K papers excluded; pooled rate)")
     ax.grid(True, alpha=0.3)
+    ax.set_ylim(bottom=0)
     ax.legend(title="diversity", fontsize=9)
     fig.tight_layout()
     fig.savefig(OUT_PNG, dpi=150)
