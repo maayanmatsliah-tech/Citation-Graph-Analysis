@@ -30,12 +30,16 @@ import duckdb
 ATTR = os.environ.get("ATTR", "data/attributes.duckdb")
 EDGES = os.environ.get("EDGES", "data/edges.csv")
 PAIRS = os.environ.get("PAIRS", "data/mutual_pairs.csv")
-OUT_CSV = os.environ.get("OUT_CSV", "outputs/mutual_citation_rate/mutual_rate_by_diversity.csv")
-OUT_PNG = os.environ.get("OUT_PNG", "outputs/mutual_citation_rate/rate_by_diversity.png")
+OUT_CSV = os.environ.get(
+    "OUT_CSV", "outputs/mutual_citation_rate/mutual_rate_by_diversity.csv"
+)
+OUT_PNG = os.environ.get(
+    "OUT_PNG", "outputs/mutual_citation_rate/rate_by_diversity.png"
+)
 MEM = os.environ.get("MEM", "10GB")
 MIN_PAPERS = int(os.environ.get("MIN_PAPERS", "10000"))
 MIN_YEAR = int(os.environ.get("MIN_YEAR", "0"))
-MAX_YEAR = int(os.environ.get("MAX_YEAR", "9999"))
+MAX_YEAR = int(os.environ.get("MAX_YEAR", "2023"))
 GROUPS = ["1", "2", "3", "4", "5", "6+"]
 
 
@@ -98,16 +102,27 @@ def compute():
 
 def write_outputs(rows):
     import csv
+
     rows = [r for r in rows if r[2] >= MIN_PAPERS]
     with open(OUT_CSV, "w", newline="") as f:
         w = csv.writer(f)
-        w.writerow(["year", "diversity_group", "n_papers", "sum_cited", "sum_mutual", "rate_pct"])
+        w.writerow(
+            [
+                "year",
+                "diversity_group",
+                "n_papers",
+                "sum_cited",
+                "sum_mutual",
+                "rate_pct",
+            ]
+        )
         for year, grp, n, sc, sm, rate in rows:
             w.writerow([year, grp, n, sc, sm, f"{rate:.4f}"])
     print(f"wrote {OUT_CSV}")
 
     try:
         import matplotlib
+
         matplotlib.use("Agg")
         import matplotlib.pyplot as plt
     except Exception as e:
@@ -120,23 +135,36 @@ def write_outputs(rows):
         if pts:
             xs, ys = zip(*pts)
             field = "field" if grp == "1" else "fields"
-            ax.plot(xs, ys, marker="o", markersize=3, linewidth=1.6,
-                    label=f"cites {grp} {field}")
+            ax.plot(
+                xs,
+                ys,
+                marker="o",
+                markersize=3,
+                linewidth=1.6,
+                label=f"cites {grp} {field}",
+            )
     ax.set_xlabel("Publication year")
     ax.set_ylabel("Mutual-citation rate (% of citations reciprocated)")
-    ax.set_title("Mutual-citation rate by year, per diversity group\n"
-                 "(group 0 + cells <10K papers excluded; pooled rate)")
+    ax.set_title(
+        "Mutual-citation rate by year, per diversity group\n"
+        "(group 0 + cells <10K papers excluded; pooled rate)"
+    )
     ax.grid(True, alpha=0.3)
     ax.set_ylim(bottom=0)
-    ax.legend(title="diversity", fontsize=9)
-    fig.tight_layout()
+    ax.set_xlim(left=MIN_YEAR, right=2023)
+    ax.legend(
+        title="diversity", fontsize=9, loc="upper left", bbox_to_anchor=(1.01, 1.0)
+    )
+    fig.tight_layout(rect=(0, 0, 0.82, 1))
     fig.savefig(OUT_PNG, dpi=150)
     print(f"wrote {OUT_PNG}")
 
 
 def main():
     rows = compute()
-    print(f"{'year':>6} {'grp':>4} {'n_papers':>12} {'sum_cited':>14} {'sum_mutual':>12} {'rate%':>8}")
+    print(
+        f"{'year':>6} {'grp':>4} {'n_papers':>12} {'sum_cited':>14} {'sum_mutual':>12} {'rate%':>8}"
+    )
     for year, grp, n, sc, sm, rate in rows:
         if n >= MIN_PAPERS:
             print(f"{year:>6} {grp:>4} {n:>12,} {sc:>14,} {sm:>12,} {rate:>8.4f}")

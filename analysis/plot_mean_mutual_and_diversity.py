@@ -28,12 +28,16 @@ import duckdb
 ATTR = os.environ.get("ATTR", "data/attributes.duckdb")
 EDGES = os.environ.get("EDGES", "data/edges.csv")
 PAIRS = os.environ.get("PAIRS", "data/mutual_pairs.csv")
-OUT_CSV = os.environ.get("OUT_CSV", "outputs/mean_mutual_vs_diversity/mean_mutual_and_diversity.csv")
-OUT_PNG = os.environ.get("OUT_PNG", "outputs/mean_mutual_vs_diversity/mean_mutual_and_diversity.png")
+OUT_CSV = os.environ.get(
+    "OUT_CSV", "outputs/mean_mutual_vs_diversity/mean_mutual_and_diversity.csv"
+)
+OUT_PNG = os.environ.get(
+    "OUT_PNG", "outputs/mean_mutual_vs_diversity/mean_mutual_and_diversity.png"
+)
 MEM = os.environ.get("MEM", "10GB")
 MIN_PAPERS = int(os.environ.get("MIN_PAPERS", "10000"))
 MIN_YEAR = int(os.environ.get("MIN_YEAR", "0"))
-MAX_YEAR = int(os.environ.get("MAX_YEAR", "9999"))
+MAX_YEAR = int(os.environ.get("MAX_YEAR", "2023"))
 
 
 def compute():
@@ -92,6 +96,7 @@ def compute():
 
 def write_outputs(rows):
     import csv
+
     rows = [r for r in rows if r[1] >= MIN_PAPERS]
     with open(OUT_CSV, "w", newline="") as f:
         w = csv.writer(f)
@@ -102,6 +107,7 @@ def write_outputs(rows):
 
     try:
         import matplotlib
+
         matplotlib.use("Agg")
         import matplotlib.pyplot as plt
     except Exception as e:
@@ -116,16 +122,30 @@ def write_outputs(rows):
     fig, ax1 = plt.subplots(figsize=(12, 7))
     c1, c2 = "C0", "C3"
 
-    l1, = ax1.plot(xs, mutual, marker="o", markersize=3, linewidth=1.6, color=c1,
-                   label="mean mutual citations per paper")
+    (l1,) = ax1.plot(
+        xs,
+        mutual,
+        marker="o",
+        markersize=3,
+        linewidth=1.6,
+        color=c1,
+        label="mean mutual citations per paper",
+    )
     ax1.set_xlabel("Publication year")
     ax1.set_ylabel("Mean mutual citations per paper", color=c1)
     ax1.tick_params(axis="y", labelcolor=c1)
     ax1.grid(True, alpha=0.3)
 
     ax2 = ax1.twinx()
-    l2, = ax2.plot(xs, diversity, marker="s", markersize=3, linewidth=1.6, color=c2,
-                   label="mean diversity count per paper")
+    (l2,) = ax2.plot(
+        xs,
+        diversity,
+        marker="s",
+        markersize=3,
+        linewidth=1.6,
+        color=c2,
+        label="mean diversity count per paper",
+    )
     ax2.set_ylabel("Mean diversity count per paper (raw, no 6+ bucketing)", color=c2)
     ax2.tick_params(axis="y", labelcolor=c2)
 
@@ -134,10 +154,15 @@ def write_outputs(rows):
     ax1.set_ylim(bottom=0)
     ax2.set_ylim(bottom=0)
 
-    ax1.set_title("Mean mutual citations vs mean diversity count, by year\n"
-                  "(papers citing >=1 work; diversity_count counted raw)")
-    ax1.legend(handles=[l1, l2], loc="upper right", fontsize=9)
-    fig.tight_layout()
+    ax1.set_title(
+        "Mean mutual citations vs mean diversity count, by year\n"
+        "(papers citing >=1 work; diversity_count counted raw)"
+    )
+    ax1.set_xlim(left=MIN_YEAR, right=2023)
+    ax1.legend(
+        handles=[l1, l2], loc="upper left", bbox_to_anchor=(1.01, 1.0), fontsize=9
+    )
+    fig.tight_layout(rect=(0, 0, 0.82, 1))
     fig.savefig(OUT_PNG, dpi=150)
     print(f"wrote {OUT_PNG}")
 
