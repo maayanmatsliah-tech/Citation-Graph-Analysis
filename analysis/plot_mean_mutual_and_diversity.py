@@ -36,7 +36,7 @@ OUT_PNG = os.environ.get(
 )
 MEM = os.environ.get("MEM", "10GB")
 MIN_PAPERS = int(os.environ.get("MIN_PAPERS", "10000"))
-MIN_YEAR = int(os.environ.get("MIN_YEAR", "0"))
+MIN_YEAR = int(os.environ.get("MIN_YEAR", "1975"))
 MAX_YEAR = int(os.environ.get("MAX_YEAR", "2023"))
 
 
@@ -159,10 +159,7 @@ def write_outputs(rows):
         "(papers citing >=1 work; diversity_count counted raw)"
     )
     ax1.set_xlim(left=MIN_YEAR, right=2023)
-    ax1.legend(
-        handles=[l1, l2], loc="upper left", bbox_to_anchor=(1.01, 1.0), fontsize=9
-    )
-    fig.tight_layout(rect=(0, 0, 0.82, 1))
+    fig.tight_layout()
     fig.savefig(OUT_PNG, dpi=150)
     print(f"wrote {OUT_PNG}")
 
