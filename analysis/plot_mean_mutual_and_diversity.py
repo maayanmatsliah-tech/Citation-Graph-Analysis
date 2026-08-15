@@ -1,11 +1,9 @@
 """
-Two lines by year:
-  - mean number of mutual citations per paper   (left y-axis)
-  - mean diversity_count per paper              (right y-axis)
+Mean mutual citations per paper by year.
 
-Uses the RAW diversity_count -- no 6+ bucketing, every value counted as-is
-(including 0). Both means are taken over the SAME population: papers that cite
-at least one work (n_cited >= 1), so the two lines describe the same cohort.
+This keeps the same cohort as before: papers that cite at least one work
+(n_cited >= 1). It reports only the mean mutual-citation count per paper and
+omits the diversity overlay.
 
 Per paper we need: year, diversity_count, n_mutual.
   - n_mutual = number of mutual pairs it belongs to        (from mutual_pairs.csv;
@@ -13,9 +11,7 @@ Per paper we need: year, diversity_count, n_mutual.
   - diversity_count, year                                  (from attributes.duckdb)
   - n_cited (only used to define the cohort)               (from edges.csv)
 
-Two y-axes because the scales differ (mutual/paper ~0.0X, diversity ~few).
-
-Outputs OUT_CSV (per-year table) and OUT_PNG (the two-line chart).
+Outputs OUT_CSV (per-year table) and OUT_PNG (the single-line chart).
 
 Env: ATTR, EDGES, PAIRS, OUT_CSV, OUT_PNG, MEM (default 10GB),
      MIN_PAPERS (drop a year with fewer papers than this; default 10000).
@@ -100,9 +96,9 @@ def write_outputs(rows):
     rows = [r for r in rows if r[1] >= MIN_PAPERS]
     with open(OUT_CSV, "w", newline="") as f:
         w = csv.writer(f)
-        w.writerow(["year", "n_papers", "mean_mutual", "mean_diversity"])
+        w.writerow(["year", "n_papers", "mean_mutual"])
         for year, n, mm, md in rows:
-            w.writerow([year, n, f"{mm:.6f}", f"{md:.6f}"])
+            w.writerow([year, n, f"{mm:.6f}"])
     print(f"wrote {OUT_CSV}")
 
     try:
@@ -114,51 +110,28 @@ def write_outputs(rows):
         print(f"(matplotlib unavailable: {e}; wrote CSV only)")
         return
 
-    pts = sorted([(r[0], r[2], r[3]) for r in rows])
+    pts = sorted([(r[0], r[2]) for r in rows])
     xs = [p[0] for p in pts]
     mutual = [p[1] for p in pts]
-    diversity = [p[2] for p in pts]
 
-    fig, ax1 = plt.subplots(figsize=(12, 7))
-    c1, c2 = "C0", "C3"
-
-    (l1,) = ax1.plot(
+    fig, ax = plt.subplots(figsize=(12, 7))
+    ax.plot(
         xs,
         mutual,
         marker="o",
         markersize=3,
         linewidth=1.6,
-        color=c1,
+        color="C0",
         label="mean mutual citations per paper",
     )
-    ax1.set_xlabel("Publication year")
-    ax1.set_ylabel("Mean mutual citations per paper", color=c1)
-    ax1.tick_params(axis="y", labelcolor=c1)
-    ax1.grid(True, alpha=0.3)
-
-    ax2 = ax1.twinx()
-    (l2,) = ax2.plot(
-        xs,
-        diversity,
-        marker="s",
-        markersize=3,
-        linewidth=1.6,
-        color=c2,
-        label="mean diversity count per paper",
+    ax.set_xlabel("Publication year")
+    ax.set_ylabel("Mean mutual citations per paper")
+    ax.set_title(
+        "Mean mutual citations per paper, by year\n" "(papers citing >=1 work)"
     )
-    ax2.set_ylabel("Mean diversity count per paper (raw, no 6+ bucketing)", color=c2)
-    ax2.tick_params(axis="y", labelcolor=c2)
-
-    # anchor both axes at 0 so the near-flat diversity series isn't magnified
-    # into visual noise by autoscaling (see backfill note)
-    ax1.set_ylim(bottom=0)
-    ax2.set_ylim(bottom=0)
-
-    ax1.set_title(
-        "Mean mutual citations vs mean diversity count, by year\n"
-        "(papers citing >=1 work; diversity_count counted raw)"
-    )
-    ax1.set_xlim(left=MIN_YEAR, right=2023)
+    ax.grid(True, alpha=0.3)
+    ax.set_ylim(bottom=0)
+    ax.set_xlim(left=MIN_YEAR, right=MAX_YEAR)
     fig.tight_layout()
     fig.savefig(OUT_PNG, dpi=150)
     print(f"wrote {OUT_PNG}")
@@ -166,10 +139,10 @@ def write_outputs(rows):
 
 def main():
     rows = compute()
-    print(f"{'year':>6} {'n_papers':>12} {'mean_mutual':>12} {'mean_div':>10}")
+    print(f"{'year':>6} {'n_papers':>12} {'mean_mutual':>12}")
     for year, n, mm, md in rows:
         if n >= MIN_PAPERS:
-            print(f"{year:>6} {n:>12,} {mm:>12.6f} {md:>10.4f}")
+            print(f"{year:>6} {n:>12,} {mm:>12.6f}")
     write_outputs(rows)
 
 
