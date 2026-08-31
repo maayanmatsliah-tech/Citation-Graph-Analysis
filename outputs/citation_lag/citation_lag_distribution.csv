@@ -1,0 +1,5 @@
+threshold,n_pairs,n_total,cumulative_pct
+same_year,679057,1365303,49.7367
+within_1_year,1143468,1365303,83.7520
+within_2_years,1244738,1365303,91.1694
+within_3_years,1280376,1365303,93.7796

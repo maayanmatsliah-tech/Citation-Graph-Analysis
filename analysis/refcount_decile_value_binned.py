@@ -49,7 +49,7 @@ def load_papers() -> pd.DataFrame:
                 JOIN attributes a
                   ON CAST(ltrim(nc.id::VARCHAR, 'W') AS BIGINT) = CAST(ltrim(a.id::VARCHAR, 'W') AS BIGINT)
                 LEFT JOIN nm ON nm.id = nc.id
-                WHERE nc.n_cited >= 1
+                WHERE nc.n_cited >= 3
             )
             SELECT *
             FROM papers
