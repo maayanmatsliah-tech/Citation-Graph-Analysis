@@ -1,0 +1,31 @@
+1/4 building clean attributes (dropping field='Unknown') ...
+    attributes: 148,726,765 -> 131,046,144  (dropped 17,680,621)
+2/4 writing clean edges (source must survive) ...
+    edges_clean rows: 100,047,459
+3/4 building sources set from clean edges ...
+4/4 unnest -> source-filter -> canonical group -> write mutual pairs ...
+Traceback (most recent call last):
+  File "/Users/maayan/Projects/Citation-Graph-Analysis/analysis/clean_dataset.py", line 123, in <module>
+    main()
+    ~~~~^^
+  File "/Users/maayan/Projects/Citation-Graph-Analysis/analysis/clean_dataset.py", line 88, in main
+    mcon.execute(f"""
+    ~~~~~~~~~~~~^^^^^
+        COPY (
+        ^^^^^^
+    ...<17 lines>...
+        ) TO '{PAIRS_OUT}' (HEADER, DELIMITER ',')
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    """)
+    ^^^^
+_duckdb.OutOfMemoryException: Out of Memory Error: failed to offload data block of size 128.0 KiB (54.7 GiB/54.7 GiB used).
+This limit was set by the 'max_temp_directory_size' setting.
+By default, this setting utilizes the available disk space on the drive where the 'temp_directory' is located.
+You can adjust this setting, by using (for example) PRAGMA max_temp_directory_size='10GiB'
+
+Possible solutions:
+* Reducing the number of threads (SET threads=X)
+* Disabling insertion-order preservation (SET preserve_insertion_order=false)
+* Increasing the memory limit (SET memory_limit='...GB')
+
+See also https://duckdb.org/docs/stable/guides/performance/how_to_tune_workloads

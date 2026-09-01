@@ -165,14 +165,21 @@ def main():
         # Discard any partial part written after the last completed checkpoint.
         os.truncate(ATTR_OUT, a_off)
         os.truncate(EDGES_OUT, e_off)
-        print(f"resuming: {len(done)} parts already done, "
-              f"truncated to {a_off}/{e_off} bytes", file=sys.stderr)
+        print(
+            f"resuming: {len(done)} parts already done, "
+            f"truncated to {a_off}/{e_off} bytes",
+            file=sys.stderr,
+        )
 
     n_attr = 0
     n_edge = 0
-    with open(ATTR_OUT, "a" if resuming else "w", newline="", encoding="utf-8") as af, \
-         open(EDGES_OUT, "a" if resuming else "w", newline="", encoding="utf-8") as ef, \
-         open(PROGRESS, "a", encoding="utf-8") as cp:
+    with open(
+        ATTR_OUT, "a" if resuming else "w", newline="", encoding="utf-8"
+    ) as af, open(
+        EDGES_OUT, "a" if resuming else "w", newline="", encoding="utf-8"
+    ) as ef, open(
+        PROGRESS, "a", encoding="utf-8"
+    ) as cp:
         aw = csv.writer(af)
         ew = csv.writer(ef)
         if not resuming:
@@ -210,11 +217,13 @@ def main():
                 except RETRYABLE as ex:
                     if attempt == MAX_RETRIES:
                         raise
-                    wait = min(60, 2 ** attempt)
-                    print(f"  {type(ex).__name__} on {key} "
-                          f"(attempt {attempt}/{MAX_RETRIES}); rolling back "
-                          f"part, reconnecting, retrying in {wait}s",
-                          file=sys.stderr)
+                    wait = min(60, 2**attempt)
+                    print(
+                        f"  {type(ex).__name__} on {key} "
+                        f"(attempt {attempt}/{MAX_RETRIES}); rolling back "
+                        f"part, reconnecting, retrying in {wait}s",
+                        file=sys.stderr,
+                    )
                     af.flush()
                     af.truncate(start_a)
                     af.seek(0, os.SEEK_END)
