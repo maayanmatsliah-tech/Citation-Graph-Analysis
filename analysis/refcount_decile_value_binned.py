@@ -3,7 +3,19 @@
 Reference-count decile analysis with value-based bins.
 
 Cohort:
-  Only papers with n_cited >= 3 are included.
+  Papers with n_cited >= 3 AND published in [MIN_YEAR, MAX_YEAR] (default
+  1975-2023).
+
+  The 2023 cap matters: cleaning only dropped field='Unknown', so ~15.5M
+  papers dated 2024-2025 survive in attributes.duckdb with a real field.
+  Uncapped they were 12.9% of this cohort, and they are heavily
+  right-censored -- a 2024/2025 paper contributes its full n_cited but its
+  reciprocal citations mostly postdate the snapshot, so n_mutual is
+  systematically depressed. That biases the mutual rate downward, and it
+  does so unevenly across deciles.
+
+  The deciles are computed AFTER this filter, so the bins describe the
+  analysed population rather than being inherited from a wider one.
 
 Decile definition:
   Papers with the same n_cited value MUST remain in the same decile.
@@ -28,6 +40,10 @@ Inputs:
   data/_n_mutual.csv
   data/attributes.duckdb
 
+Env:
+  MIN_YEAR  default 1975
+  MAX_YEAR  default 2023
+
 Outputs:
   figures/csvs/refcount_decile_dvn_share.csv
   figures/csvs/refcount_decile_dvn_rate.csv
@@ -37,6 +53,7 @@ Outputs:
 The attributes database is opened READ_ONLY and is never modified.
 """
 
+import os
 from pathlib import Path
 
 import duckdb
@@ -58,6 +75,9 @@ DUCKDB_TMP = ROOT / "data" / "_duckdb_tmp"
 OUT_CSV_DIR = ROOT / "figures" / "csvs"
 OUT_GRAPH_DIR = ROOT / "figures" / "graphs"
 
+MIN_YEAR = int(os.environ.get("MIN_YEAR", "1975"))
+MAX_YEAR = int(os.environ.get("MAX_YEAR", "2023"))
+
 
 def compute_share_and_rate():
     OUT_CSV_DIR.mkdir(parents=True, exist_ok=True)
@@ -76,15 +96,22 @@ def compute_share_and_rate():
         # ------------------------------------------------------------------
         # 1. Build the paper-level cohort.
         #
-        # ONLY n_cited >= 3 enters the analysis.
+        # ONLY n_cited >= 3 AND year in [MIN_YEAR, MAX_YEAR] enters the
+        # analysis. The year bound excludes the right-censored 2024/2025
+        # papers that survived cleaning (see module docstring); it is applied
+        # here, before deciles are computed, so the bins are derived from the
+        # analysed population.
         #
         # Cast both CSV IDs and n_cited explicitly because read_csv with
         # all_varchar=true returns VARCHAR columns.
         # ------------------------------------------------------------------
 
+        # in_window: everything inside the year bound, BEFORE the n_cited cut,
+        # so the "excluded because n_cited < 3" diagnostic below is scoped to
+        # the same population rather than silently counting other years too.
         con.execute(
             """
-            CREATE TEMP TABLE papers AS
+            CREATE TEMP TABLE in_window AS
             SELECT
                 CAST(nc.id AS BIGINT) AS id,
                 CAST(nc.n_cited AS BIGINT) AS n_cited,
@@ -105,9 +132,16 @@ def compute_share_and_rate():
                 all_varchar=true
             ) nm
               ON CAST(nm.id AS BIGINT) = CAST(nc.id AS BIGINT)
-            WHERE CAST(nc.n_cited AS BIGINT) >= 3
+            WHERE a.year BETWEEN ? AND ?
             """,
-            [str(NC_PATH), str(NM_PATH)],
+            [str(NC_PATH), str(NM_PATH), MIN_YEAR, MAX_YEAR],
+        )
+
+        con.execute(
+            """
+            CREATE TEMP TABLE papers AS
+            SELECT * FROM in_window WHERE n_cited >= 3
+            """
         )
 
         # ------------------------------------------------------------------
@@ -288,15 +322,28 @@ def compute_share_and_rate():
         n_under_3 = con.execute(
             """
             SELECT COUNT(*)
+            FROM in_window
+            WHERE n_cited < 3
+            """
+        ).fetchone()[0]
+
+        # Papers that would have entered the cohort but for the year bound.
+        # Derived by subtraction rather than a second join: validate_data.py
+        # confirms every edges.csv source resolves in attributes, so the
+        # all-years n_cited>=3 count needs no join to be comparable.
+        n_ge3_all_years = con.execute(
+            """
+            SELECT COUNT(*)
             FROM read_csv(
                 ?,
                 header=true,
                 all_varchar=true
             )
-            WHERE CAST(n_cited AS BIGINT) < 3
+            WHERE CAST(n_cited AS BIGINT) >= 3
             """,
             [str(NC_PATH)],
         ).fetchone()[0]
+        n_year_excluded = n_ge3_all_years - n_total
 
         n_zero_diversity = con.execute(
             """
@@ -337,8 +384,13 @@ def compute_share_and_rate():
         con.close()
 
     print()
-    print(f"papers included (n_cited >= 3): {n_total:,}")
-    print(f"papers excluded because n_cited < 3: {n_under_3:,}")
+    print(f"year window: {MIN_YEAR}-{MAX_YEAR}")
+    print(f"papers included (n_cited >= 3, in window): {n_total:,}")
+    print(
+        f"papers excluded by the year bound (n_cited >= 3, outside window): "
+        f"{n_year_excluded:,}"
+    )
+    print(f"papers excluded because n_cited < 3 (in window): {n_under_3:,}")
     print(
         "diversity_count=0 papers excluded from "
         f"diverse/non-diverse comparison: {n_zero_diversity:,}"
