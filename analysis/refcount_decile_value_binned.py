@@ -4,6 +4,15 @@
 The important rule is: papers with the same reference count cannot be split
 across adjacent deciles. We therefore assign deciles at the level of distinct
 n_cited values, not on individual rows via ntile(10).
+
+GROUPING FIX: diversity_count == 0 papers (cite nothing with a known field --
+e.g. only self-citations, only Unknown-field papers, or only out-of-set
+papers) are now EXCLUDED from the diverse/non-diverse comparison, rather than
+silently falling into "diverse" via the old `else` branch. The paper's
+definition only covers 1-2 fields (non-diverse) and 3+ fields (diverse); it
+says nothing about 0, so folding 0 into "diverse" was a misclassification,
+not a documented choice. The count of excluded 0-diversity papers is now
+printed per run so this is visible rather than silent.
 """
 
 import os
@@ -82,15 +91,27 @@ def assign_value_deciles(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def group_label(dc: int) -> str:
-    return "non-diverse" if 1 <= dc <= 2 else "diverse"
+def assign_group(df: pd.DataFrame) -> pd.DataFrame:
+    """Single source of truth for the diverse/non-diverse split.
+
+    diversity_count 1-2 -> non-diverse
+    diversity_count 3+  -> diverse
+    diversity_count 0   -> EXCLUDED (group = None), not silently "diverse".
+    """
+    df = df.copy()
+
+    def _label(x):
+        x = int(x)
+        if x == 0:
+            return None
+        return "non-diverse" if x <= 2 else "diverse"
+
+    df["group"] = df["diversity_count"].map(_label)
+    return df
 
 
 def build_share(df: pd.DataFrame, out_csv: Path, out_png: Path):
-    df = df.copy()
-    df["group"] = df["diversity_count"].map(
-        lambda x: "non-diverse" if 1 <= int(x) <= 2 else "diverse"
-    )
+    df = df[df["group"].notna()].copy()
     share = df.groupby(["decile", "group"], as_index=False).agg(
         n_papers=("id", "count"),
         n_with_mutual=("n_mutual", lambda s: int((s > 0).sum())),
@@ -116,10 +137,7 @@ def build_share(df: pd.DataFrame, out_csv: Path, out_png: Path):
 
 
 def build_rate(df: pd.DataFrame, out_csv: Path, out_png: Path):
-    df = df.copy()
-    df["group"] = df["diversity_count"].map(
-        lambda x: "non-diverse" if 1 <= int(x) <= 2 else "diverse"
-    )
+    df = df[df["group"].notna()].copy()
     rate = df.groupby(["decile", "group"], as_index=False).agg(
         n_papers=("id", "count"),
         sum_cited=("n_cited", "sum"),
@@ -167,6 +185,12 @@ def main():
 
     df = load_papers()
     df = assign_value_deciles(df)
+    df = assign_group(df)
+
+    n_zero = int((df["diversity_count"] == 0).sum())
+    n_total = len(df)
+    print(f"diversity_count=0 papers excluded from diverse/non-diverse comparison: "
+          f"{n_zero:,} of {n_total:,} ({100*n_zero/n_total:.2f}%)")
 
     share_csv = OUT_CSV_DIR / "refcount_decile_dvn_share.csv"
     share_png = OUT_GRAPH_DIR / "refcount_decile_dvn_share.png"

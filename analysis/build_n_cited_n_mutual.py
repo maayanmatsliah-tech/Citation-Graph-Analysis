@@ -54,8 +54,8 @@ import duckdb
 
 EDGES = os.environ.get("EDGES", "data/edges.csv")
 PAIRS = os.environ.get("PAIRS", "data/mutual_pairs.csv")
-OUT_NCITED = os.environ.get("OUT_NCITED", "data/_n_cited_reconstructed.csv")
-OUT_NMUTUAL = os.environ.get("OUT_NMUTUAL", "data/_n_mutual_reconstructed.csv")
+OUT_NCITED = os.environ.get("OUT_NCITED", "data/_n_cited.csv")
+OUT_NMUTUAL = os.environ.get("OUT_NMUTUAL", "data/_n_mutual.csv")
 MEM = os.environ.get("MEM", "10GB")
 DUCKDB_TMP = os.environ.get("DUCKDB_TMP", "data/_duckdb_tmp")
 DEDUPE = os.environ.get("DEDUPE", "1") == "1"

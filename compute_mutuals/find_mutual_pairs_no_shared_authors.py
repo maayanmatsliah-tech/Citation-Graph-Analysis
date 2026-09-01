@@ -27,9 +27,17 @@ OUT = os.environ.get("OUT", "data/mutual_pairs_no_shared_authors.csv")
 MEM = os.environ.get("MEM", "10GB")
 
 # split "A; B; C" -> ['a','b','c'], trimmed/lowercased, blanks removed
-NAMES = ("list_filter("
-         "  list_transform(string_split(COALESCE({col}, ''), '; '), x -> trim(lower(x))),"
-         "  x -> x <> '')")
+NAMES = (
+    "list_filter("
+    "  list_transform(string_split(COALESCE({col}, ''), '; '), x -> trim(lower(x))),"
+    "  x -> x <> '')"
+)
+
+# explicit dialect instead of relying on DuckDB's auto-sniffer, which can
+# fail on some files even when they're valid CSV (e.g. after passing through
+# a non-DuckDB CSV writer with different quoting/line-ending conventions)
+# +++ READ_CSV_OPTS = "header=true, all_varchar=true, delim=',', quote='\"'"
+READ_CSV_OPTS = "auto_detect=false, header=true, columns={'paper_a':'VARCHAR','paper_b':'VARCHAR'}, delim=',', quote='\"', strict_mode=false"
 
 
 def main():
@@ -46,13 +54,15 @@ def main():
         SELECT p.paper_a, p.paper_b,
                {NAMES.format(col='aa.author')} AS na,
                {NAMES.format(col='ab.author')} AS nb
-        FROM read_csv('{PAIRS_IN}', header=true, all_varchar=true) p
+        FROM read_csv('{PAIRS_IN}', {READ_CSV_OPTS}) p
         LEFT JOIN a.attributes aa ON aa.id = p.paper_a
         LEFT JOIN a.attributes ab ON ab.id = p.paper_b
     """)
 
     total = con.execute("SELECT count(*) FROM joined").fetchone()[0]
-    shared = con.execute("SELECT count(*) FROM joined WHERE list_has_any(na, nb)").fetchone()[0]
+    shared = con.execute(
+        "SELECT count(*) FROM joined WHERE list_has_any(na, nb)"
+    ).fetchone()[0]
 
     con.execute(f"""
         COPY (
