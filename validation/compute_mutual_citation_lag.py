@@ -8,8 +8,13 @@ the corpus's tail years are affected by right-censoring at the 2023 cutoff --
 a pair can only be observed as mutual once BOTH papers exist, so a pair formed
 late in the corpus has less time to complete than one formed decades earlier.
 
+Joins on the raw 'W'-prefixed id: attributes.id is VARCHAR in exactly the same
+format as mutual_pairs.csv, so no ltrim/CAST normalization is needed (casting
+both sides to BIGINT gives the same answer but forces a full cast of all 131M
+attributes rows twice).
+
 Env: PAIRS (default data/mutual_pairs.csv), ATTR (default data/attributes.duckdb),
-     OUT (default outputs/citation_lag/citation_lag_distribution.csv),
+     OUT (default figures/csvs/citation_lag_distribution.csv),
      MEM (default 10GB).
 """
 
@@ -19,7 +24,7 @@ import duckdb
 
 PAIRS = os.environ.get("PAIRS", "data/mutual_pairs.csv")
 ATTR = os.environ.get("ATTR", "data/attributes.duckdb")
-OUT = os.environ.get("OUT", "outputs/citation_lag/citation_lag_distribution.csv")
+OUT = os.environ.get("OUT", "figures/csvs/citation_lag_distribution.csv")
 MEM = os.environ.get("MEM", "10GB")
 
 
