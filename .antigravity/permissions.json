@@ -1,0 +1,18 @@
+{
+    "mode": "ask",
+    "default": "ask",
+    "fileSystem": {
+        "read": "ask",
+        "write": "ask",
+        "create": "ask",
+        "delete": "ask"
+    },
+    "terminal": {
+        "execute": "ask",
+        "background": "ask"
+    },
+    "tools": {
+        "mcp": "ask",
+        "webSearch": "ask"
+    }
+}
