@@ -12,8 +12,8 @@ Per paper we need:
   - n_cited        (from data/_n_cited.csv; only used to define the cohort)
 
 Outputs:
-  figures/csvs/mean_mutual_per_year.csv
-  figures/graphs/mean_mutual_per_year.png
+  figures/csvs/mean_mutual_citations_per_year.csv
+  figures/graphs/mean_mutual_citations_per_year.png
 
 Env: ATTR, NCITED, NMUTUAL, OUT_CSV, OUT_PNG, MEM (default 10GB),
      MIN_PAPERS (drop a year with fewer papers than this; default 10000),
@@ -29,10 +29,10 @@ NCITED = os.environ.get("NCITED", "data/_n_cited.csv")
 NMUTUAL = os.environ.get("NMUTUAL", "data/_n_mutual.csv")
 
 OUT_CSV = os.environ.get(
-    "OUT_CSV", "figures/csvs/mean_mutual_per_year.csv"
+    "OUT_CSV", "figures/csvs/mean_mutual_citations_per_year.csv"
 )
 OUT_PNG = os.environ.get(
-    "OUT_PNG", "figures/graphs/mean_mutual_per_year.png"
+    "OUT_PNG", "figures/graphs/mean_mutual_citations_per_year.png"
 )
 
 MEM = os.environ.get("MEM", "10GB")

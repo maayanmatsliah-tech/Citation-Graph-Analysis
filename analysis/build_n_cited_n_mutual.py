@@ -29,9 +29,19 @@ out (now applied below), not that DEDUPE was the wrong choice. Re-run
 validate_n_cited_n_mutual.py after any further changes to confirm rows
 and sums both match, plus n_mutual.
 
+WARNING -- OUT_NCITED / OUT_NMUTUAL DEFAULT TO THE REAL FILES and will be
+overwritten in place. (An earlier version of this docstring claimed they
+defaulted to *_reconstructed.csv; they do not. Point them elsewhere if you want
+a non-destructive dry run.)
+
+n_cited does NOT depend on PAIRS -- it is a pure function of EDGES. Only
+n_mutual is derived from the pairs file. So when the pair set changes, rebuild
+n_mutual ALONE with STEPS=nmutual; rebuilding n_cited means a full pass over
+the ~36GB edges.csv for no change in output.
+
 VALIDATION (do this before relying on this script further):
-  1. Run this script -- it writes to *_reconstructed.csv, NOT the real files,
-     so nothing existing is overwritten.
+  1. Run with OUT_NCITED / OUT_NMUTUAL pointed at *_reconstructed.csv paths so
+     nothing existing is overwritten.
   2. Compare against the real data/_n_cited.csv / data/_n_mutual.csv using
      validate_n_cited_n_mutual.py: row counts, sums, and a random spot-check.
   3. If n_cited still diverges, the likely culprit is the dedup choice --
@@ -42,10 +52,11 @@ VALIDATION (do this before relying on this script further):
 Env:
   EDGES         default data/edges.csv
   PAIRS         default data/mutual_pairs.csv
-  OUT_NCITED    default data/_n_cited_reconstructed.csv
-  OUT_NMUTUAL   default data/_n_mutual_reconstructed.csv
+  OUT_NCITED    default data/_n_cited.csv   (OVERWRITTEN IN PLACE)
+  OUT_NMUTUAL   default data/_n_mutual.csv  (OVERWRITTEN IN PLACE)
   MEM           default 10GB
   DEDUPE        default 1 (distinct targets); set 0 to use raw list length instead
+  STEPS         default both; 'ncited' or 'nmutual' to run just one step
 """
 
 import os
@@ -59,6 +70,9 @@ OUT_NMUTUAL = os.environ.get("OUT_NMUTUAL", "data/_n_mutual.csv")
 MEM = os.environ.get("MEM", "10GB")
 DUCKDB_TMP = os.environ.get("DUCKDB_TMP", "data/_duckdb_tmp")
 DEDUPE = os.environ.get("DEDUPE", "1") == "1"
+STEPS = os.environ.get("STEPS", "both")
+if STEPS not in ("both", "ncited", "nmutual"):
+    raise SystemExit(f"STEPS must be one of both/ncited/nmutual, got {STEPS!r}")
 
 
 def main():
@@ -71,7 +85,30 @@ def main():
     con.execute(f"SET temp_directory='{DUCKDB_TMP}'")
     con.execute("SET preserve_insertion_order=false")
 
-    print(f"1/2 computing n_cited per source (dedupe={DEDUPE}) -> {OUT_NCITED} ...",
+    if STEPS in ("both", "ncited"):
+        build_n_cited(con)
+    else:
+        print(f"skipping n_cited (STEPS={STEPS}) -- {OUT_NCITED} left untouched",
+              flush=True)
+
+    if STEPS in ("both", "nmutual"):
+        build_n_mutual(con)
+    else:
+        print(f"skipping n_mutual (STEPS={STEPS}) -- {OUT_NMUTUAL} left untouched",
+              flush=True)
+
+    if STEPS in ("both", "ncited"):
+        n = con.execute(f"SELECT count(*) FROM read_csv('{OUT_NCITED}', header=true)").fetchone()[0]
+        print(f"\nwrote {n:,} rows to {OUT_NCITED}")
+    if STEPS in ("both", "nmutual"):
+        n = con.execute(f"SELECT count(*) FROM read_csv('{OUT_NMUTUAL}', header=true)").fetchone()[0]
+        print(f"wrote {n:,} rows to {OUT_NMUTUAL}")
+    con.close()
+    print("\nNEXT STEP: validate with validation/validate_n_cited_n_mutual.py")
+
+
+def build_n_cited(con):
+    print(f"computing n_cited per source (dedupe={DEDUPE}) -> {OUT_NCITED} ...",
           flush=True)
     if DEDUPE:
         n_cited_expr = """
@@ -102,7 +139,9 @@ def main():
         ) TO '{OUT_NCITED}' (HEADER, DELIMITER ',')
     """)
 
-    print(f"2/2 computing n_mutual per paper -> {OUT_NMUTUAL} ...", flush=True)
+
+def build_n_mutual(con):
+    print(f"computing n_mutual per paper from {PAIRS} -> {OUT_NMUTUAL} ...", flush=True)
     con.execute(f"""
         COPY (
             SELECT id, count(*) AS n_mutual FROM (
@@ -115,14 +154,6 @@ def main():
             GROUP BY id
         ) TO '{OUT_NMUTUAL}' (HEADER, DELIMITER ',')
     """)
-
-    n1 = con.execute(f"SELECT count(*) FROM read_csv('{OUT_NCITED}', header=true)").fetchone()[0]
-    n2 = con.execute(f"SELECT count(*) FROM read_csv('{OUT_NMUTUAL}', header=true)").fetchone()[0]
-    con.close()
-    print(f"\nwrote {n1:,} rows to {OUT_NCITED}")
-    print(f"wrote {n2:,} rows to {OUT_NMUTUAL}")
-    print("\nNEXT STEP: validate against the existing real files before trusting this --")
-    print("  see the VALIDATION section in this script's docstring.")
 
 
 if __name__ == "__main__":

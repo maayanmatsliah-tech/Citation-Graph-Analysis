@@ -5,7 +5,7 @@ con = duckdb.connect('data/attributes.duckdb', read_only=True)
 result = con.execute("""
     WITH pairs AS (
         SELECT paper_a, paper_b
-        FROM read_csv('data/mutual_pairs_clean.csv', header=true, all_varchar=true)
+        FROM read_csv('data/mutual_pairs.csv', header=true, all_varchar=true)
     )
     SELECT
         count(*) AS total_pairs,
@@ -20,7 +20,7 @@ print(f"total_pairs={result[0]:,}  paper_a_missing={result[1]:,}  paper_b_missin
 result2 = con.execute("""
     WITH pairs AS (
         SELECT paper_a, paper_b
-        FROM read_csv('data/mutual_pairs_clean.csv', header=true, all_varchar=true)
+        FROM read_csv('data/mutual_pairs.csv', header=true, all_varchar=true)
     )
     SELECT count(*) AS pairs_touching_unknown
     FROM pairs p
